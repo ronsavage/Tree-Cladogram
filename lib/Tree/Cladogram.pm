@@ -182,10 +182,13 @@ sub test
 
 	$self -> compute_co_ords;
 	$self -> find_minimum_y;
+
+	print 'minimum_y:  ', $self -> minimum_y, "\n";
+	print 'top_margin: ', $self -> top_margin, "\n";
+
 	$self -> shift_image if ($self -> minimum_y <= $self -> top_margin);
 
 	print map("$_\n", @{$self -> root -> tree2string({no_attributes => 0})}), "\n";
-	print 'Minimum y: ', $self -> minimum_y, "\n";
 
 } # End of test.
 
