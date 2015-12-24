@@ -1,0 +1,24 @@
+Revision history for Perl extension Local::Flowers.
+
+1.04  2015-12-06T16:00:00
+	- Add data/garden.layout.html
+	- Add and modify code from Local::Novels.
+	- Redesign database schema.
+	- Get export/import working.
+	- Update timestamps in this file.
+
+1.03  2013-11-17T11:56:00
+	- Switch from Moose to Moo.
+	- Adopt new Local::Logger.
+	- Adopt Text::CSV::Encoded for import/export.
+
+1.02  2013-02-05T11:50:00
+	- Shift jQuery and DataTables urls to Local::Config.
+	- Remove validator.js stuff, since it is YUI-specific.
+
+1.01  2012-11-17T10:31:00
+	- Adopt new Local::Config and Local::Logger.
+	- Chop Lingua::EN::Inflect::Number since we don't generate CGI form menus now.
+
+1.00  2012-10-01T12:36:00
+	  - Original version

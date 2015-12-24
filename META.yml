@@ -1,0 +1,50 @@
+---
+abstract: 'Manage the "flowers" database'
+author:
+  - 'Ron Savage (ron@savage.net.au)'
+build_requires:
+  ExtUtils::MakeMaker: '0'
+configure_requires:
+  ExtUtils::MakeMaker: '0'
+dynamic_config: 1
+generated_by: 'ExtUtils::MakeMaker version 7.06, CPAN::Meta::Converter version 2.143240'
+license: artistic_2
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: '1.4'
+name: Local-Flowers
+no_index:
+  directory:
+    - t
+    - inc
+requires:
+  Capture::Tiny: '0.3'
+  Config::Tiny: '2.2'
+  DBI: '1.63'
+  DBIx::Admin::CreateTable: '2.07'
+  DBIx::Simple: '1.35'
+  Date::Simple: '3.03'
+  Encode: '2.55'
+  FindBin: '1.49'
+  Getopt::Long: '2.42'
+  Lingua::EN::Inflect: '1.895'
+  Local::Config: '1.24'
+  Mojo::Home: '0'
+  Mojo::Log: '0'
+  Mojolicious: '6.22'
+  Moo: '1.003001'
+  Path::Tiny: '0.044'
+  Pod::Usage: '1.63'
+  Test::More: '1.001014'
+  Test::Pod: '1.48'
+  Text::CSV: '1.33'
+  Text::CSV::Encoded: '0.22'
+  Text::Xslate: '1.0007'
+  Types::Standard: '0.032'
+  feature: '0'
+  open: '0'
+  strict: '0'
+  utf8: '0'
+  warnings: '0'
+version: '1.04'
+
