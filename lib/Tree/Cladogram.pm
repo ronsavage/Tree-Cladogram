@@ -14,6 +14,14 @@ has child_step =>
 	required => 0,
 );
 
+has left_margin =>
+(
+	default  => sub{return 5},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
 has minimum_y =>
 (
 	default  => sub{return 0},
@@ -132,7 +140,8 @@ sub shift_image
 	my($self)		= @_;
 	my($minimum_y)	= $self -> minimum_y;
 	my($top_margin)	= $self -> top_margin;
-	my($offset)		= $minimum_y <= 0
+	my($x_offset)	= $self -> left_margin;
+	my($y_offset)	= $minimum_y <= 0
 						? $top_margin - $minimum_y
 						: $minimum_y < $top_margin
 							? $top_margin - $minimum_y
@@ -147,7 +156,8 @@ sub shift_image
 		{
 			my($node)		= @_;
 			$attributes		= $node -> attributes;
-			$$attributes{y}	+= $offset;
+			$$attributes{x}	+= $x_offset;
+			$$attributes{y}	+= $y_offset;
 
 			return 1; # Keep walking.
 		},
