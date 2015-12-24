@@ -147,7 +147,7 @@ sub shift_image
 		{
 			my($node)		= @_;
 			$attributes		= $node -> attributes;
-			$$attributes{y}	+= $top_margin;
+			$$attributes{y}	+= $offset;
 
 			return 1; # Keep walking.
 		},
