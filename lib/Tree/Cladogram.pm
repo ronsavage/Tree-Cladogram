@@ -1,18 +1,28 @@
 package Tree::Cladogram;
 
+use File::Slurper 'read_lines';
+
 use Imager;
 
 use Moo;
 
 use Tree::DAG_Node;
 
-use Types::Standard qw/Any Int/;
+use Types::Standard qw/Any Int Str/;
 
 has child_step =>
 (
-	default  => sub{return 20},
+	default  => sub{return 50},
 	is       => 'rw',
 	isa      => Int,
+	required => 0,
+);
+
+has output_file =>
+(
+	default  => sub{return ''},
+	is       => 'rw',
+	isa      => Str,
 	required => 0,
 );
 
@@ -48,6 +58,14 @@ has minimum_y =>
 	required => 0,
 );
 
+has output_file =>
+(
+	default  => sub{return ''},
+	is       => 'rw',
+	isa      => Str,
+	required => 0,
+);
+
 has root =>
 (
 	default  => sub{return Tree::DAG_Node -> new({name => 'Root', attributes => {place => 'middle'} })},
@@ -58,7 +76,7 @@ has root =>
 
 has sister_step =>
 (
-	default  => sub{return 10},
+	default  => sub{return 20},
 	is       => 'rw',
 	isa      => Int,
 	required => 0,
@@ -199,9 +217,9 @@ sub find_minimum_y
 sub plot_image
 {
 	my($self)		= @_;
-	my($maximum_x)	= $self -> maximum_x + 50;
-	my($maximum_y)	= $self -> maximum_y + 50;
-	my($image)		= Imager -> new(xsize => $maximum_x, y_size => $maximum_y);
+	my($maximum_x)	= $self -> maximum_x + 500;
+	my($maximum_y)	= $self -> maximum_y + 100;
+	my($image)		= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
 	my($blue)		= Imager::Color -> new(0, 0, 255);
 	my($red)		= Imager::Color -> new(255, 0, 0);
 	my($white)		= Imager::Color -> new(255, 255, 255);
@@ -241,6 +259,8 @@ sub plot_image
 
 				if ($place eq 'middle')
 				{
+					# Draw a line off to the left of the middle daughter of the root.
+
 					if ($node -> is_root)
 					{
 						$image -> line
@@ -282,11 +302,37 @@ sub plot_image
 		_depth	=> 0,
 	});
 
-	my($file_name) = "$ENV{DR}/demo.png";
-
-	$image -> write(file => $file_name);
+	$image -> write(file => $self -> output_file);
 
 } # End of plot_image.
+
+# ------------------------------------------------
+
+sub read
+{
+	my($self)	= @_;
+	my($count)	= 0;
+
+	my(@fields);
+
+	for my $line (read_lines($self -> input_file) )
+	{
+		$count++;
+
+		@fields = split(/\s+/, $line);
+
+		if ($count == 1)
+		{
+		}
+		elsif ($count == 2)
+		{
+		}
+		else
+		{
+		}
+	}
+
+} # End of read.
 
 # ------------------------------------------------
 
@@ -330,20 +376,20 @@ sub test
 	my($self) = @_;
 
 	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
-	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => 'beetles', attributes => {place => 'above'} }) );
+	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => 'Beetles', attributes => {place => 'above'} }) );
 
 	my($tree_1) = Tree::DAG_Node -> new({name => '', attributes => {place => 'below'} });
 
 	$self -> root -> add_daughter($tree_1);
 	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
-	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => 'wasps, bees, ants', attributes => {place => 'above'} }) );
+	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => 'Wasps, bees, ants', attributes => {place => 'above'} }) );
 
 	my($tree_2) = Tree::DAG_Node -> new({name => '', attributes => {place => 'below'} });
 
 	$tree_1 -> add_daughter($tree_2);
 	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
-	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'butterflies, moths', attributes => {place => 'above'} }) );
-	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'flies', attributes => {place => 'below'} }) );
+	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'Butterflies, moths', attributes => {place => 'above'} }) );
+	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'Flies', attributes => {place => 'below'} }) );
 
 	$self -> compute_co_ords;
 	$self -> find_maximum_x;
@@ -366,3 +412,119 @@ sub test
 # ------------------------------------------------
 
 1;
+
+=pod
+
+	Sample 1:
+
+	See L<https://en.wikipedia.org/wiki/Cladogram>
+
+			+---- Beetles
+			|
+			|
+	Root ---+	+---- Wasps, bees, ants
+			|	|
+			|	|
+			1---+	+---- Butterflies, moths
+				|	|
+				|	|
+				2---+
+					|
+					|
+					+---- Flies
+
+
+	For matching data file, see data/cladogram.01.txt
+
+	Parent	Place	Node
+	-		-		Root
+	Root	Above	Beetles
+	Root	Below	1
+	1		Above	Wasps, bees, ants
+	1		Below	2
+	2		Above	Butterflies, moths
+	2		Below	Flies
+
+	Sample 2:
+
+	See L<http://phenomena.nationalgeographic.com/2015/12/11/paleo-profile-the-smoke-hill-bird/>
+
+			+--- Archaeopterix lithographica
+			|
+			|
+			|
+	Root ---+	+--- Apsaravis ukhaana
+			|	|
+			|	|
+			|	|
+			1---+	+--- Gansus yumemensis
+				|	|
+				|	|
+				|	|
+				2---+	+--- Ichthyornis dispar
+					|	|
+					|	|		+--- Gallus gallus
+					|	|		|
+					3---+	5---+
+						|	|	|
+						|	|	+--- Anas clypeata
+						|	|
+						4---+
+							|	+--- Pasquiaornis
+							|	|
+							|	|
+							6---+	+--- Enaliornis
+								|	|
+								|	|
+								|	|
+								7---+	+--- Baptornis advenus
+									|	|
+									|	|		+--- Brodavis varnei
+									|	|		|
+									8---+	10--+
+										|	|	|
+										|	|	+--- Brodavis baileyi
+										|	|
+										9---+
+											|	+--- Fumicollis hoffmani
+											|	|
+											|	|
+											11--+	+--- Parahesperornis alexi
+												|	|
+												|	|
+												12--+
+													|
+													|
+													+--- Hesperornis regalis
+
+	For matching data file, see data/nationalgeographic.01.txt
+
+	Parent	Place	Node
+	-		-		Root
+	Root	Above	Archaeopterix lithographica
+	Root	Below	1
+	1		Above	Apsaravis ukhaana
+	1		Below	2
+	2		Above	Gansus yumemensis
+	2		Below	3
+	3		Above	Ichthyornis dispar
+	3		Below	4
+	4		Above	5
+	4		Below	6
+	5		Above	Gallus gallus
+	5		Below	Anas clypeata
+	6		Above	Pasquiaornis
+	7		Below	8
+	8		Above	Baptornis advenus
+	8		Below	9
+	9		Above	10
+	9		Below	11
+	10		Above	Brodavis varnei
+	10		Below	Brodavis baileyi
+	11		Above	Fumicollis hoffmani
+	11		Below	12
+	12		Above	Parahesperornis alexi
+	12		Below	Hesperornis regalis
+
+
+=cut
