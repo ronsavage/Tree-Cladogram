@@ -328,36 +328,93 @@ sub read
 	my($self)	= @_;
 	my($count)	= 0;
 
-	my(@fields);
+	my(@field);
+	my($node);
+	my(%seen);
 
-	for my $line (map{/^[^#]/; $_} read_lines($self -> input_file) )
+	for my $line (read_lines($self -> input_file) )
 	{
-		$count++;
+		$line =~ s/^\s+//;
+		$line =~ s/\s+$//;
 
-		@fields = split(/\s+/, $line);
+		next if ( (length($line) == 0) || ($line =~ /^\s*#/) );
+
+		$count++;
 
 		# Format expected (see data/wikipedia.01.clad):
 		#
 		# Parent	Place	Node
-		# Root		Above	Beetles
-		# Root		Below	1
-		# 1			Above	Wasps, bees, ants
-		# 1			Below	2
-		# 2			Above	Butterflies, moths
-		# 2			Below	Flies
+		# Root		above	Beetles
+		# Root		below	1
+		# 1			above	Wasps, bees, ants
+		# 1			below	2
+		# 2			above	Butterflies, moths
+		# 2			below	Flies
+
+		@field		= split(/\s+/, $line);
+		$field[1]	= lc $field[1];
 
 		if ($count == 1)
 		{
-			if ( ($fields[0] ne 'Parent') || ($fields[1] ne 'Place') || ($fields[2] ne 'Node') )
+			$field[0] = lc $field[0];
+			$field[2] = lc $field[2];
+
+			if ( ($field[0] ne 'parent') || ($field[1] ne 'place') || ($field[2] ne 'node') )
 			{
-				die "Error. Input file line $count is in the wrong format\n";
+				die "Error. Input file line $count is in the wrong format. It must be 'Parent Place Node'\n";
 			}
 		}
 		else
 		{
-			if ($#fields <= 1)
+			if ($#field <= 1)
 			{
 				die "Error. Input file line $count does not have enough columns\n";
+			}
+
+			$seen{$field[0]} = 0 if (! defined $seen{$field[0]});
+			$seen{$field[0]}++;
+
+			if ($seen{$field[0]} > 2)
+			{
+				die "Error. Input file line $count has $seen{$field[0]} copies of $field[0], but the maximum must be 2\n";
+			}
+			elsif ($seen{$field[0]} == 1)
+			{
+				# The first time we see this node, we add the middle daughter.
+
+				if ($field[0] =~ /Root/i)
+				{
+					$self -> root -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
+				}
+			}
+
+=pod
+
+	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
+	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => 'Beetles', attributes => {place => 'above'} }) );
+
+	my($tree_1) = Tree::DAG_Node -> new({name => '', attributes => {place => 'below'} });
+
+	$self -> root -> add_daughter($tree_1);
+	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
+	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => 'Wasps, bees, ants', attributes => {place => 'above'} }) );
+
+	my($tree_2) = Tree::DAG_Node -> new({name => '', attributes => {place => 'below'} });
+
+	$tree_1 -> add_daughter($tree_2);
+	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
+	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'Butterflies, moths', attributes => {place => 'above'} }) );
+	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'Flies', attributes => {place => 'below'} }) );
+
+=cut
+
+			if ($field[1] != /above|below/)
+			{
+				die "Error. Input file line $count has a unknown place, '$field[1]'. It must be 'above' or 'below'\n";
+			}
+			else
+			{
+				$node = Tree::DAG_Node -> new({name => $field[2], attributes => {place => $field[1]} });
 			}
 		}
 	}
@@ -405,8 +462,6 @@ sub test
 {
 	my($self) = @_;
 
-	$self -> read;
-
 	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
 	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => 'Beetles', attributes => {place => 'above'} }) );
 
@@ -438,6 +493,9 @@ sub test
 	print map("$_\n", @{$self -> root -> tree2string({no_attributes => 0})}), "\n";
 
 	$self -> plot_image;
+	$self -> root -> delete_tree;
+	$self -> root(Tree::DAG_Node -> new({name => 'Root', attributes => {place => 'middle'} }));
+	$self -> read;
 
 } # End of test.
 
@@ -469,12 +527,12 @@ sub test
 	For matching data file, see data/cladogram.01.txt
 
 	Parent	Place	Node
-	Root	Above	Beetles
-	Root	Below	1
-	1		Above	Wasps, bees, ants
-	1		Below	2
-	2		Above	Butterflies, moths
-	2		Below	Flies
+	Root	above	Beetles
+	Root	below	1
+	1		above	Wasps, bees, ants
+	1		below	2
+	2		above	Butterflies, moths
+	2		below	Flies
 
 	Sample 2:
 
@@ -531,30 +589,30 @@ sub test
 	For matching data file, see data/nationalgeographic.01.txt
 
 	Parent	Place	Node
-	Root	Above	Archaeopterix lithographica
-	Root	Below	1
-	1		Above	Apsaravis ukhaana
-	1		Below	2
-	2		Above	Gansus yumemensis
-	2		Below	3
-	3		Above	Ichthyornis dispar
-	3		Below	4
-	4		Above	5
-	4		Below	6
-	5		Above	Gallus gallus
-	5		Below	Anas clypeata
-	6		Above	Pasquiaornis
-	7		Below	8
-	8		Above	Baptornis advenus
-	8		Below	9
-	9		Above	10
-	9		Below	11
-	10		Above	Brodavis varnei
-	10		Below	Brodavis baileyi
-	11		Above	Fumicollis hoffmani
-	11		Below	12
-	12		Above	Parahesperornis alexi
-	12		Below	Hesperornis regalis
+	Root	above	Archaeopterix lithographica
+	Root	below	1
+	1		above	Apsaravis ukhaana
+	1		below	2
+	2		above	Gansus yumemensis
+	2		below	3
+	3		above	Ichthyornis dispar
+	3		below	4
+	4		above	5
+	4		below	6
+	5		above	Gallus gallus
+	5		below	Anas clypeata
+	6		above	Pasquiaornis
+	7		below	8
+	8		above	Baptornis advenus
+	8		below	9
+	9		above	10
+	9		below	11
+	10		above	Brodavis varnei
+	10		below	Brodavis baileyi
+	11		above	Fumicollis hoffmani
+	11		below	12
+	12		above	Parahesperornis alexi
+	12		below	Hesperornis regalis
 
 
 =cut
