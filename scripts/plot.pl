@@ -18,6 +18,7 @@ my(%option);
 if ($option_parser -> getoptions
 (
 	\%option,
+	'font_file=s',
 	'help',
 	'input_file=s',
 	'output_file=s',
@@ -25,7 +26,7 @@ if ($option_parser -> getoptions
 {
 	pod2usage(1) if ($option{'help'});
 
-	exit Tree::Cladogram -> new(%option) -> test;
+	exit Tree::Cladogram -> new(%option) -> run;
 }
 else
 {
@@ -49,6 +50,7 @@ plt.pl plots a cladogram.
 plot.pl [options]
 
 	Options:
+	-font_file $path2font
 	-help
 	-input_file $in_file
 	-output_file $out_file
@@ -60,6 +62,12 @@ Exit value: 0.
 =head1 OPTIONS
 
 =over 4
+
+=item o -font_file $path2font
+
+The path to a font file.
+
+Default: /usr/local/share/fonts/truetype/gothic.ttf
 
 =item o -help
 

@@ -19,6 +19,14 @@ has child_step =>
 	required => 0,
 );
 
+has font_file =>
+(
+	default  => sub{return '/usr/local/share/fonts/truetype/gothic.ttf'},
+	is       => 'rw',
+	isa      => Str,
+	required => 0,
+);
+
 has input_file =>
 (
 	default  => sub{return ''},
@@ -69,7 +77,7 @@ has output_file =>
 
 has root =>
 (
-	default  => sub{return Tree::DAG_Node -> new({name => 'Root', attributes => {place => 'middle'} })},
+	default  => sub{return ''},
 	is       => 'rw',
 	isa      => Any,
 	required => 0,
@@ -77,7 +85,7 @@ has root =>
 
 has sister_step =>
 (
-	default  => sub{return 20},
+	default  => sub{return 30},
 	is       => 'rw',
 	isa      => Int,
 	required => 0,
@@ -221,11 +229,12 @@ sub plot_image
 	my($maximum_x)	= $self -> maximum_x + 500;
 	my($maximum_y)	= $self -> maximum_y + 100;
 	my($image)		= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
-	my($fill)		= Imager::Fill -> new(hatch => 'stipple2');
 	my($grey)		= Imager::Color -> new(0x80, 0x80, 0x80);
 	my($blue)		= Imager::Color -> new(0, 0, 255);
 	my($red)		= Imager::Color -> new(255, 0, 0);
 	my($white)		= Imager::Color -> new(255, 255, 255);
+	my($font_size)	= 8;
+	my($font)		= Imager::Font -> new(color => $blue, file => $self -> font_file, size => 2 * $font_size) || die "Error. Can't define font: " . Imager -> errstr;
 	my($x_step)		= $self -> child_step;
 
 	$image -> box(color => $white, filled => 1);
@@ -233,7 +242,9 @@ sub plot_image
 
 	my($attributes);
 	my(@daughters, @daughter_attributes, $daughter_attributes);
+	my($index);
 	my($middle_attributes);
+	my($name);
 	my($parent_attributes, $place, %place);
 
 	$self -> root -> walk_down
@@ -258,7 +269,9 @@ sub plot_image
 
 			for $place (keys %place)
 			{
-				$daughter_attributes = $daughter_attributes[$place{$place}];
+				$index					= $place{$place};
+				$daughter_attributes	= $daughter_attributes[$index];
+				$name					= $daughters[$index] -> name;
 
 				if ($place eq 'middle')
 				{
@@ -285,30 +298,46 @@ sub plot_image
 					# Draw a line (a filled box) up or down from the middle,
 					# and then draw a line from there off to the right.
 
+=pod
+
 					$image -> box
 					(
 						box =>
 						[
 							$$middle_attributes{x},
 							$$middle_attributes{y},
-							$$daughter_attributes{x} + 2,
+							$$middle_attributes{x} + 2,
 							$$daughter_attributes{y},
 						],
 						color	=> $grey,
 						filled	=> 1,
 					);
+
+=cut
+
 					$image -> box
 					(
 						box =>
 						[
-							$$daughter_attributes{x},
+							$$middle_attributes{x},
 							$$daughter_attributes{y},
-							$$daughter_attributes{x} + $x_step,
+							$$daughter_attributes{x},
 							$$daughter_attributes{y} + 2,
 						],
 						color	=> $grey,
 						filled	=> 1,
 					);
+
+					if (length($name) > 0)
+					{
+						$image -> string
+						(
+							font	=> $font,
+							string	=> $name,
+							x		=> $$daughter_attributes{x} + 4,
+							y		=> $$daughter_attributes{y} + $font_size,
+						);
+					}
 				}
 			}
 
@@ -328,8 +357,8 @@ sub read
 	my($self)	= @_;
 	my($count)	= 0;
 
+	my(%cache);
 	my(@field);
-	my($node);
 	my(%seen);
 
 	for my $line (read_lines($self -> input_file) )
@@ -351,75 +380,105 @@ sub read
 		# 2			above	Butterflies, moths
 		# 2			below	Flies
 
-		@field		= split(/\s+/, $line);
-		$field[1]	= lc $field[1];
+		@field		= split(/\s+/, $line, 3);
+		$field[$_]	= lc $field[$_] for (0 .. 1);
 
 		if ($count == 1)
 		{
-			$field[0] = lc $field[0];
 			$field[2] = lc $field[2];
 
 			if ( ($field[0] ne 'parent') || ($field[1] ne 'place') || ($field[2] ne 'node') )
 			{
 				die "Error. Input file line $count is in the wrong format. It must be 'Parent Place Node'\n";
 			}
+
+			next;
 		}
-		else
+
+		if ($#field <= 1)
 		{
-			if ($#field <= 1)
-			{
-				die "Error. Input file line $count does not have enough columns\n";
-			}
+			die "Error. Input file line $count does not have enough columns\n";
+		}
 
-			$seen{$field[0]} = 0 if (! defined $seen{$field[0]});
-			$seen{$field[0]}++;
+		$seen{$field[0]} = 0 if (! defined $seen{$field[0]});
+		$seen{$field[0]}++;
 
-			if ($seen{$field[0]} > 2)
-			{
-				die "Error. Input file line $count has $seen{$field[0]} copies of $field[0], but the maximum must be 2\n";
-			}
-			elsif ($seen{$field[0]} == 1)
-			{
-				# The first time we see this node, we add the middle daughter.
+		if ($seen{$field[0]} > 2)
+		{
+			die "Error. Input file line $count has $seen{$field[0]} copies of $field[0], but the maximum must be 2\n";
+		}
+		elsif ($field[1] !~ /above|below/)
+		{
+			die "Error. Input file line $count has a unknown place: '$field[1]'. It must be 'above' or 'below'\n";
+		}
 
-				if ($field[0] =~ /Root/i)
-				{
-					$self -> root -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
-				}
-			}
+		#$field[2] = '' if ($field[2] =~ /^\d+$/);
 
 =pod
 
-	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
-	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => 'Beetles', attributes => {place => 'above'} }) );
+Parent	Place	Node
+root	above	Archaeopterix lithographica
+root	below	1
+1		above	Apsaravis ukhaana
+1		below	2
+2		above	Gansus yumemensis
+2		below	3
+3		above	Ichthyornis dispar
+3		below	4
+4		above	5
+4		below	6
+5		above	Gallus gallus
+5		below	Anas clypeata
+6		above	Pasquiaornis
+6		below	7
 
-	my($tree_1) = Tree::DAG_Node -> new({name => '', attributes => {place => 'below'} });
-
-	$self -> root -> add_daughter($tree_1);
-	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
-	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => 'Wasps, bees, ants', attributes => {place => 'above'} }) );
-
-	my($tree_2) = Tree::DAG_Node -> new({name => '', attributes => {place => 'below'} });
-
-	$tree_1 -> add_daughter($tree_2);
-	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
-	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'Butterflies, moths', attributes => {place => 'above'} }) );
-	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'Flies', attributes => {place => 'below'} }) );
+Parent	Place	Node
+root	Above	Beetles
+root	Below	1
+1		Above	Wasps, bees, ants
+1		Below	2
+2		Above	Butterflies, moths
+2		Below	Flies
 
 =cut
 
-			if ($field[1] != /above|below/)
-			{
-				die "Error. Input file line $count has a unknown place, '$field[1]'. It must be 'above' or 'below'\n";
-			}
-			else
-			{
-				$node = Tree::DAG_Node -> new({name => $field[2], attributes => {place => $field[1]} });
-			}
+		if (! $cache{$field[0]})
+		{
+			$cache{$field[0]} = Tree::DAG_Node -> new({name => $field[0], attributes => {place => 'middle'} });
 		}
+
+		$cache{$field[2]} = Tree::DAG_Node -> new({name => $field[2], attributes => {place => $field[1]} });
+
+		$cache{$field[0]} -> add_daughter($cache{$field[2]});
 	}
 
+	$self -> root($cache{root});
+
 } # End of read.
+
+# ------------------------------------------------
+
+sub run
+{
+	my($self) = @_;
+
+	$self -> read;
+	$self -> compute_co_ords;
+	$self -> find_maximum_x;
+	$self -> find_minimum_y;
+
+	print 'maximum_x:  ', $self -> maximum_x, "\n";
+	print 'minimum_y:  ', $self -> minimum_y, "\n";
+	print 'top_margin: ', $self -> top_margin, "\n";
+
+	$self -> shift_image if ($self -> minimum_y <= $self -> top_margin);
+	$self -> find_maximum_y;
+	$self -> plot_image;
+
+	print 'maximum_y:  ', $self -> maximum_y, "\n";
+	print map("$_\n", @{$self -> root -> tree2string({no_attributes => 0})}), "\n";
+
+} # End of run.
 
 # ------------------------------------------------
 
@@ -458,49 +517,6 @@ sub shift_image
 
 # ------------------------------------------------
 
-sub test
-{
-	my($self) = @_;
-
-	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
-	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => 'Beetles', attributes => {place => 'above'} }) );
-
-	my($tree_1) = Tree::DAG_Node -> new({name => '', attributes => {place => 'below'} });
-
-	$self -> root -> add_daughter($tree_1);
-	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
-	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => 'Wasps, bees, ants', attributes => {place => 'above'} }) );
-
-	my($tree_2) = Tree::DAG_Node -> new({name => '', attributes => {place => 'below'} });
-
-	$tree_1 -> add_daughter($tree_2);
-	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
-	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'Butterflies, moths', attributes => {place => 'above'} }) );
-	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'Flies', attributes => {place => 'below'} }) );
-
-	$self -> compute_co_ords;
-	$self -> find_maximum_x;
-	$self -> find_minimum_y;
-
-	print 'maximum_x:  ', $self -> maximum_x, "\n";
-	print 'minimum_y:  ', $self -> minimum_y, "\n";
-	print 'top_margin: ', $self -> top_margin, "\n";
-
-	$self -> shift_image if ($self -> minimum_y <= $self -> top_margin);
-	$self -> find_maximum_y;
-
-	print 'maximum_y:  ', $self -> maximum_y, "\n";
-	print map("$_\n", @{$self -> root -> tree2string({no_attributes => 0})}), "\n";
-
-	$self -> plot_image;
-	$self -> root -> delete_tree;
-	$self -> root(Tree::DAG_Node -> new({name => 'Root', attributes => {place => 'middle'} }));
-	$self -> read;
-
-} # End of test.
-
-# ------------------------------------------------
-
 1;
 
 =pod
@@ -527,8 +543,8 @@ sub test
 	For matching data file, see data/cladogram.01.txt
 
 	Parent	Place	Node
-	Root	above	Beetles
-	Root	below	1
+	root	above	Beetles
+	root	below	1
 	1		above	Wasps, bees, ants
 	1		below	2
 	2		above	Butterflies, moths
@@ -586,11 +602,11 @@ sub test
 													|
 													+--- Hesperornis regalis
 
-	For matching data file, see data/nationalgeographic.01.txt
+	For matching data file, see data/nationalgeographic.01.clad
 
 	Parent	Place	Node
-	Root	above	Archaeopterix lithographica
-	Root	below	1
+	root	above	Archaeopterix lithographica
+	root	below	1
 	1		above	Apsaravis ukhaana
 	1		below	2
 	2		above	Gansus yumemensis
@@ -602,6 +618,8 @@ sub test
 	5		above	Gallus gallus
 	5		below	Anas clypeata
 	6		above	Pasquiaornis
+	6		below	7
+	7		above	Enaliornis
 	7		below	8
 	8		above	Baptornis advenus
 	8		below	9
