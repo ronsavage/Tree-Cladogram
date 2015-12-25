@@ -3,6 +3,7 @@ package Tree::Cladogram;
 use File::Slurper 'read_lines';
 
 use Imager;
+use Imager::Fill;
 
 use Moo;
 
@@ -220,6 +221,8 @@ sub plot_image
 	my($maximum_x)	= $self -> maximum_x + 500;
 	my($maximum_y)	= $self -> maximum_y + 100;
 	my($image)		= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
+	my($fill)		= Imager::Fill -> new(hatch => 'stipple2');
+	my($grey)		= Imager::Color -> new(0x80, 0x80, 0x80);
 	my($blue)		= Imager::Color -> new(0, 0, 255);
 	my($red)		= Imager::Color -> new(255, 0, 0);
 	my($white)		= Imager::Color -> new(255, 255, 255);
@@ -263,36 +266,48 @@ sub plot_image
 
 					if ($node -> is_root)
 					{
-						$image -> line
+						$image -> box
 						(
-							aa		=> 1, # Anti-aliased.
-							color	=> $blue,
-							x1		=> $$middle_attributes{x},
-							y1		=> $$middle_attributes{y},
-							x2		=> $$middle_attributes{x} - $x_step,
-							y2		=> $$middle_attributes{y},
+							box =>
+							[
+								$$middle_attributes{x},
+								$$middle_attributes{y},
+								$$middle_attributes{x} - $x_step + 1,
+								$$middle_attributes{y} + 2,
+							],
+							color	=> $grey,
+							filled	=> 1,
 						);
 					}
 				}
 				else
 				{
-					$image -> line
+					# Draw a line (a filled box) up or down from the middle,
+					# and then draw a line from there off to the right.
+
+					$image -> box
 					(
-						aa		=> 1, # Anti-aliased.
-						color	=> $blue,
-						x1		=> $$middle_attributes{x},
-						y1		=> $$middle_attributes{y},
-						x2		=> $$daughter_attributes{x},
-						y2		=> $$daughter_attributes{y},
+						box =>
+						[
+							$$middle_attributes{x},
+							$$middle_attributes{y},
+							$$daughter_attributes{x} + 2,
+							$$daughter_attributes{y},
+						],
+						color	=> $grey,
+						filled	=> 1,
 					);
-					$image -> line
+					$image -> box
 					(
-						aa		=> 1, # Anti-aliased.
-						color	=> $blue,
-						x1		=> $$daughter_attributes{x},
-						y1		=> $$daughter_attributes{y},
-						x2		=> $$daughter_attributes{x} + $x_step,
-						y2		=> $$daughter_attributes{y},
+						box =>
+						[
+							$$daughter_attributes{x},
+							$$daughter_attributes{y},
+							$$daughter_attributes{x} + $x_step,
+							$$daughter_attributes{y} + 2,
+						],
+						color	=> $grey,
+						filled	=> 1,
 					);
 				}
 			}
