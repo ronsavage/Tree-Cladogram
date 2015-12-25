@@ -1,5 +1,4 @@
 Parent	Place	Node
--		-		Root
 Root	Above	Beetles
 Root	Below	1
 1		Above	Wasps, bees, ants

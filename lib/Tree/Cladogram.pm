@@ -18,7 +18,7 @@ has child_step =>
 	required => 0,
 );
 
-has output_file =>
+has input_file =>
 (
 	default  => sub{return ''},
 	is       => 'rw',
@@ -315,20 +315,35 @@ sub read
 
 	my(@fields);
 
-	for my $line (read_lines($self -> input_file) )
+	for my $line (map{/^[^#]/; $_} read_lines($self -> input_file) )
 	{
 		$count++;
 
 		@fields = split(/\s+/, $line);
 
+		# Format expected (see data/wikipedia.01.clad):
+		#
+		# Parent	Place	Node
+		# Root		Above	Beetles
+		# Root		Below	1
+		# 1			Above	Wasps, bees, ants
+		# 1			Below	2
+		# 2			Above	Butterflies, moths
+		# 2			Below	Flies
+
 		if ($count == 1)
 		{
-		}
-		elsif ($count == 2)
-		{
+			if ( ($fields[0] ne 'Parent') || ($fields[1] ne 'Place') || ($fields[2] ne 'Node') )
+			{
+				die "Error. Input file line $count is in the wrong format\n";
+			}
 		}
 		else
 		{
+			if ($#fields <= 1)
+			{
+				die "Error. Input file line $count does not have enough columns\n";
+			}
 		}
 	}
 
@@ -374,6 +389,8 @@ sub shift_image
 sub test
 {
 	my($self) = @_;
+
+	$self -> read;
 
 	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
 	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => 'Beetles', attributes => {place => 'above'} }) );
@@ -437,7 +454,6 @@ sub test
 	For matching data file, see data/cladogram.01.txt
 
 	Parent	Place	Node
-	-		-		Root
 	Root	Above	Beetles
 	Root	Below	1
 	1		Above	Wasps, bees, ants
@@ -500,7 +516,6 @@ sub test
 	For matching data file, see data/nationalgeographic.01.txt
 
 	Parent	Place	Node
-	-		-		Root
 	Root	Above	Archaeopterix lithographica
 	Root	Below	1
 	1		Above	Apsaravis ukhaana
