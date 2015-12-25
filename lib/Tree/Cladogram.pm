@@ -198,35 +198,93 @@ sub find_minimum_y
 
 sub plot_image
 {
-	my($self)	= @_;
-	my($image)	= Imager -> new(xsize => $self -> maximum_x + 50, y_size => $self -> maximum_y + 50);
-	my($blue)	= Imager::Color -> new(0, 0, 255);
+	my($self)		= @_;
+	my($maximum_x)	= $self -> maximum_x + 50;
+	my($maximum_y)	= $self -> maximum_y + 50;
+	my($image)		= Imager -> new(xsize => $maximum_x, y_size => $maximum_y);
+	my($blue)		= Imager::Color -> new(0, 0, 255);
+	my($red)		= Imager::Color -> new(255, 0, 0);
+	my($white)		= Imager::Color -> new(255, 255, 255);
+	my($x_step)		= $self -> child_step;
+
+	$image -> box(color => $white, filled => 1);
+	$image -> box(color => $blue);
 
 	my($attributes);
-	my($daughters);
+	my(@daughters, @daughter_attributes, $daughter_attributes);
+	my($middle_attributes);
+	my($parent_attributes, $place, %place);
 
 	$self -> root -> walk_down
 	({
 		callback =>
 		sub
 		{
-			my($node)		= @_;
-			$attributes		= $node -> attributes;
-			$daughters	= $node -> daughters;
+			my($node)	= @_;
+			$attributes	= $node -> attributes;
+			@daughters	= $node -> daughters;
+			%place		= ();
 
-			if ($node -> is_root)
+			for (0 .. $#daughters)
 			{
-			}
-			else
-			{
+				$daughter_attributes[$_]	= $daughter_attributes = $daughters[$_] -> attributes;
+				$place						= $$daughter_attributes{place};
+				$place{$place}				= $_;
+				$middle_attributes			= $daughter_attributes if ($place eq 'middle');
 			}
 
-#	$image -> line(color => $blue, x1 => 0, y1 => 0, x2 => 0, y2 => 0);
+			# Connect above and below daughters to middle daughter.
+
+			for $place (keys %place)
+			{
+				$daughter_attributes = $daughter_attributes[$place{$place}];
+
+				if ($place eq 'middle')
+				{
+					if ($node -> is_root)
+					{
+						$image -> line
+						(
+							aa		=> 1, # Anti-aliased.
+							color	=> $blue,
+							x1		=> $$middle_attributes{x},
+							y1		=> $$middle_attributes{y},
+							x2		=> $$middle_attributes{x} - $x_step,
+							y2		=> $$middle_attributes{y},
+						);
+					}
+				}
+				else
+				{
+					$image -> line
+					(
+						aa		=> 1, # Anti-aliased.
+						color	=> $blue,
+						x1		=> $$middle_attributes{x},
+						y1		=> $$middle_attributes{y},
+						x2		=> $$daughter_attributes{x},
+						y2		=> $$daughter_attributes{y},
+					);
+					$image -> line
+					(
+						aa		=> 1, # Anti-aliased.
+						color	=> $blue,
+						x1		=> $$daughter_attributes{x},
+						y1		=> $$daughter_attributes{y},
+						x2		=> $$daughter_attributes{x} + $x_step,
+						y2		=> $$daughter_attributes{y},
+					);
+				}
+			}
 
 			return 1; # Keep walking.
 		},
 		_depth	=> 0,
 	});
+
+	my($file_name) = "$ENV{DR}/demo.png";
+
+	$image -> write(file => $file_name);
 
 } # End of plot_image.
 
@@ -271,20 +329,20 @@ sub test
 {
 	my($self) = @_;
 
-	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => 'beetles', attributes => {place => 'above'} }) );
 	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
+	$self -> root -> add_daughter(Tree::DAG_Node -> new({name => 'beetles', attributes => {place => 'above'} }) );
 
 	my($tree_1) = Tree::DAG_Node -> new({name => '', attributes => {place => 'below'} });
 
 	$self -> root -> add_daughter($tree_1);
-	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => 'wasps, bees, ants', attributes => {place => 'above'} }) );
 	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
+	$tree_1 -> add_daughter(Tree::DAG_Node -> new({name => 'wasps, bees, ants', attributes => {place => 'above'} }) );
 
 	my($tree_2) = Tree::DAG_Node -> new({name => '', attributes => {place => 'below'} });
 
 	$tree_1 -> add_daughter($tree_2);
-	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'butterflies, moths', attributes => {place => 'above'} }) );
 	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => '', attributes => {place => 'middle'} }) );
+	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'butterflies, moths', attributes => {place => 'above'} }) );
 	$tree_2 -> add_daughter(Tree::DAG_Node -> new({name => 'flies', attributes => {place => 'below'} }) );
 
 	$self -> compute_co_ords;
