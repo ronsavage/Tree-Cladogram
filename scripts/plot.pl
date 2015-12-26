@@ -23,6 +23,7 @@ if ($option_parser -> getoptions
 	'input_file=s',
 	'output_file=s',
 	'sister_step=i',
+	'verbose=i',
 ) )
 {
 	pod2usage(1) if ($option{'help'});
@@ -56,6 +57,7 @@ plot.pl [options]
 	-input_file $in_file
 	-output_file $out_file
 	-sister_step $integer
+	-verbose $integer
 
 All switches can be reduced to a single letter.
 
@@ -100,6 +102,12 @@ Default: ''.
 This is the # of pixels (vertically) between sisters.
 
 Default: 30.
+
+=item o -verbose $integer
+
+Set to 1 to display progress.
+
+Default: 0 (no output).
 
 =back
 

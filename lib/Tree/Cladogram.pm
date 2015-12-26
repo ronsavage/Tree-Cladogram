@@ -9,13 +9,21 @@ use Moo;
 
 use Tree::DAG_Node;
 
-use Types::Standard qw/Any Int Str/;
+use Types::Standard qw/Any ArrayRef Int Str/;
 
-has child_step =>
+has font =>
 (
-	default  => sub{return 50},
+	default  => sub{return ''},
 	is       => 'rw',
-	isa      => Int,
+	isa      => Any,
+	required => 0,
+);
+
+has font_color =>
+(
+	default  => sub{return [0, 0, 255]},
+	is       => 'rw',
+	isa      => ArrayRef,
 	required => 0,
 );
 
@@ -24,6 +32,22 @@ has font_file =>
 	default  => sub{return '/usr/local/share/fonts/truetype/gothic.ttf'},
 	is       => 'rw',
 	isa      => Str,
+	required => 0,
+);
+
+has font_size =>
+(
+	default  => sub{return 16},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
+has image =>
+(
+	default  => sub{return ''},
+	is       => 'rw',
+	isa      => Any,
 	required => 0,
 );
 
@@ -83,17 +107,33 @@ has root =>
 	required => 0,
 );
 
-has sister_step =>
+has top_margin =>
 (
-	default  => sub{return 30},
+	default  => sub{return 15},
 	is       => 'rw',
 	isa      => Int,
 	required => 0,
 );
 
-has top_margin =>
+has verbose =>
 (
-	default  => sub{return 15},
+	default  => sub{return 0},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
+has x_step =>
+(
+	default  => sub{return 50},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
+has y_step =>
+(
+	default  => sub{return 30},
 	is       => 'rw',
 	isa      => Int,
 	required => 0,
@@ -103,11 +143,36 @@ our $VERSION = '1.00';
 
 # ------------------------------------------------
 
+sub BUILD
+{
+	my($self)	= @_;
+	my($color)	= Imager::Color -> new(@{$self -> font_color});
+
+	$self -> font
+	(
+		Imager::Font -> new
+		(
+			color	=> $color,
+			file	=> $self -> font_file,
+			size	=> $self -> font_size,
+			utf8	=> 1
+		) || die "Error. Can't define font: " . Imager -> errstr
+	);
+
+	$self -> image(Imager -> new);
+
+} # End of BUILD.
+
+# ------------------------------------------------
+
 sub compute_co_ords
 {
-	my($self)			= @_;
-	my($child_step)		= $self -> child_step;
-	my($sister_step)	= $self -> sister_step;
+	my($self) = @_;
+
+	$self -> log('Entered compute_co_ords()');
+
+	my($x_step)	= $self -> x_step;
+	my($y_step)	= $self -> y_step;
 
 	my($attributes);
 	my($parent_attributes);
@@ -123,8 +188,8 @@ sub compute_co_ords
 
 			# Set defaults if steps are not provided.
 
-			$$attributes{child_step}	||= $child_step;
-			$$attributes{sister_step}	||= $sister_step;
+			$$attributes{x_step}	||= $x_step;
+			$$attributes{y_step}	||= $y_step;
 
 			# Set co-ords.
 
@@ -143,8 +208,8 @@ sub compute_co_ords
 											? 0
 											: 1;
 				$parent_attributes	= $node -> mother -> attributes;
-				$$attributes{x}		= $$parent_attributes{x} + $$attributes{child_step};
-				$$attributes{y}		= $$parent_attributes{y} + $scale * $$attributes{sister_step};
+				$$attributes{x}		= $$parent_attributes{x} + $$attributes{x_step};
+				$$attributes{y}		= $$parent_attributes{y} + $scale * $$attributes{y_step};
 			}
 
 			$node -> attributes($attributes);
@@ -160,10 +225,11 @@ sub compute_co_ords
 
 sub find_maximum_x
 {
-	my($self)		= @_;
-	my($maximum_x)	= 0;
+	my($self) = @_;
 
-	$self -> maximum_x($self -> child_step * $self -> root -> depth_under);
+	$self -> log('Entered find_maximum_x()');
+
+	$self -> maximum_x($self -> x_step * $self -> root -> depth_under);
 
 } # End of find_maximum_x.
 
@@ -171,7 +237,10 @@ sub find_maximum_x
 
 sub find_maximum_y
 {
-	my($self)		= @_;
+	my($self) = @_;
+
+	$self -> log('Entered find_maximum_y()');
+
 	my($maximum_y)	= 0;
 
 	my($attributes);
@@ -198,7 +267,10 @@ sub find_maximum_y
 
 sub find_minimum_y
 {
-	my($self)		= @_;
+	my($self) = @_;
+
+	$self -> log('Entered find_minimum_y()');
+
 	my($minimum_y)	= 0;
 
 	my($attributes);
@@ -223,28 +295,82 @@ sub find_minimum_y
 
 # ------------------------------------------------
 
+sub log
+{
+	my($self, $message) = @_;
+
+	print "$message. \n" if ($self -> verbose);
+
+} # End of log.
+
+# ------------------------------------------------
+
+sub place_text
+{
+	my($self) = @_;
+
+	$self -> log('Entered place_text()');
+
+	my($font_size)	= $self -> font_size;
+	my($x_step)		= $self -> x_step;
+
+	my($attributes);
+	my(@bounds);
+
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node)	= @_;
+			$attributes	= $node -> attributes;
+			@bounds		= $self -> image
+							(
+								halign	=> 'left',
+								image	=> undef,		# Don't draw on the image.
+								string	=> $node -> name,
+								valign	=> 'baseline',	# The default.
+								x		=> $$attributes{x} + $x_step + 4,
+								y		=> $$attributes{y} + $font_size,
+							);
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+} # End of place_text.
+
+# ------------------------------------------------
+
 sub plot_image
 {
-	my($self)		= @_;
+	my($self) = @_;
+
+	$self -> log('Entered plot_image()');
+
 	my($maximum_x)	= $self -> maximum_x + 500;
 	my($maximum_y)	= $self -> maximum_y + 100;
-	my($image)		= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
+	my($image)		= Imager -> new;
+	my($fuschia)	= Imager::Color -> new(0xff, 0, 0xff);
 	my($grey)		= Imager::Color -> new(0x80, 0x80, 0x80);
 	my($blue)		= Imager::Color -> new(0, 0, 255);
 	my($white)		= Imager::Color -> new(255, 255, 255);
 	my($font_size)	= 8; # TODO: Explain why next line uses 2 * 8.
-	my($font)		= Imager::Font -> new(color => $blue, file => $self -> font_file, size => 2 * $font_size) || die "Error. Can't define font: " . Imager -> errstr;
-	my($x_step)		= $self -> child_step;
+	my($x_step)		= $self -> x_step;
 
 	$image -> box(color => $white, filled => 1);
 	$image -> box(color => $blue);
 
 	my($attributes);
+	my($box_object);
 	my(@daughters, @daughter_attributes, $daughter_attributes);
 	my($index);
 	my($middle_attributes);
 	my($name);
 	my($parent_attributes, $place, %place);
+	my($x);
+	my($y);
 
 	$self -> root -> walk_down
 	({
@@ -283,7 +409,7 @@ sub plot_image
 						$$middle_attributes{x} + 2,
 						$$daughter_attributes{y},
 					],
-					color	=> $grey,
+					color	=> $fuschia,
 					filled	=> 1,
 				);
 
@@ -306,16 +432,33 @@ sub plot_image
 
 					# 3: Draw the text.
 
+=pod
+
 					if ( (length($name) > 0) && ($name !~ /^\d+$/) )
 					{
+						$x	= $$daughter_attributes{x} + $x_step + 4;
+						$y	= $$daughter_attributes{y} + $font_size;
+
+						$box_object = $self -> font -> bounding_box
+						(
+							string	=> $name,
+							x		=> $x,
+							y		=> $y,
+						);
+
+						print "Print. name: $name \@ ($x, $y). display_width: ", $box_object -> display_width, ". \n";
+
 						$image -> string
 						(
-							font	=> $font,
+							font	=> $self -> font,
 							string	=> $name,
-							x		=> $$daughter_attributes{x} + $x_step + 4,
-							y		=> $$daughter_attributes{y} + $font_size,
+							x		=> $x,
+							y		=> $y,
 						);
 					}
+
+=cut
+
 				}
 			}
 
@@ -351,7 +494,10 @@ sub plot_image
 
 sub read
 {
-	my($self)	= @_;
+	my($self) = @_;
+
+	$self -> log('Entered read()');
+
 	my($count)	= 0;
 	my($parent)	= $self -> root;
 
@@ -447,13 +593,22 @@ sub run
 {
 	my($self) = @_;
 
+	$self -> log('Entered run()');
+
 	$self -> read;
 	$self -> compute_co_ords;
 	$self -> find_maximum_x;
 	$self -> find_minimum_y;
 	$self -> shift_image if ($self -> minimum_y <= $self -> top_margin);
+	$self -> place_text;
 	$self -> find_maximum_y;
 	$self -> plot_image;
+
+	$self -> log('Leaving run()');
+
+	# Return 0 for success and 1 for failure.
+
+	return 0;
 
 } # End of run.
 
@@ -461,7 +616,10 @@ sub run
 
 sub shift_image
 {
-	my($self)		= @_;
+	my($self) = @_;
+
+	$self -> log('Entered shift_image()');
+
 	my($minimum_y)	= $self -> minimum_y;
 	my($top_margin)	= $self -> top_margin;
 	my($x_offset)	= $self -> left_margin;
