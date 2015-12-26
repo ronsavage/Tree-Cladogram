@@ -288,28 +288,31 @@ sub plot_image
 					filled	=> 1,
 				);
 
-				$image -> box
-				(
-					box =>
-					[
-						$$middle_attributes{x},
-						$$daughter_attributes{y},
-						$$daughter_attributes{x} + $x_step,
-						$$daughter_attributes{y} + 2,
-					],
-					color	=> $grey,
-					filled	=> 1,
-				);
-
-				if (length($name) > 0)
+				if ( ($node -> name ne $name) && ($name ne 'root') )
 				{
-					$image -> string
+					$image -> box
 					(
-						font	=> $font,
-						string	=> $name,
-						x		=> $$daughter_attributes{x} + $x_step + 4,
-						y		=> $$daughter_attributes{y} + $font_size,
+						box =>
+						[
+							$$middle_attributes{x},
+							$$daughter_attributes{y},
+							$$daughter_attributes{x} + $x_step,
+							$$daughter_attributes{y} + 2,
+						],
+						color	=> $grey,
+						filled	=> 1,
 					);
+
+					if ( (length($name) > 0) && ($name !~ /^\d+$/) )
+					{
+						$image -> string
+						(
+							font	=> $font,
+							string	=> $name,
+							x		=> $$daughter_attributes{x} + $x_step + 4,
+							y		=> $$daughter_attributes{y} + $font_size,
+						);
+					}
 				}
 			}
 
@@ -318,27 +321,24 @@ sub plot_image
 		_depth	=> 0,
 	});
 
-=pod
+	# Draw a line off to the left of the middle daughter of the root.
 
-				# Draw a line off to the left of the middle daughter of the root.
+	$attributes				= $self -> root -> attributes;
+	@daughters				= $self -> root -> daughters;
+	$daughter_attributes	= $daughters[0] -> attributes;
 
-				if ($node -> is_root)
-				{
-					$image -> box
-					(
-						box =>
-						[
-							$$middle_attributes{x},
-							$$middle_attributes{y},
-							$$middle_attributes{x} - $x_step + 1,
-							$$middle_attributes{y} + 2,
-						],
-						color	=> $grey,
-						filled	=> 1,
-					);
-				}
-
-=cut
+	$image -> box
+	(
+		box =>
+		[
+			$$daughter_attributes{x},
+			$$daughter_attributes{y},
+			$$attributes{x} - $x_step + 1,
+			$$attributes{y} + 2,
+		],
+		color	=> $grey,
+		filled	=> 1,
+	);
 
 	$image -> write(file => $self -> output_file);
 
