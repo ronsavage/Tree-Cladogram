@@ -269,11 +269,10 @@ sub plot_image
 			for $place (keys %place)
 			{
 				$index					= $place{$place};
-				$daughter_attributes	= $daughter_attributes[$index];
 				$name					= $daughters[$index] -> name;
+				$daughter_attributes	= $daughter_attributes[$index];
 
-				# Draw a line (a filled box) up or down from the middle,
-				# and then draw a line from there off to the right.
+				# 1: Draw a line (a filled box) up or down from the middle.
 
 				$image -> box
 				(
@@ -290,6 +289,8 @@ sub plot_image
 
 				if ( ($node -> name ne $name) && ($name ne 'root') )
 				{
+					# 2: Draw a line from there off to the right.
+
 					$image -> box
 					(
 						box =>
@@ -302,6 +303,8 @@ sub plot_image
 						color	=> $grey,
 						filled	=> 1,
 					);
+
+					# 3: Draw the text.
 
 					if ( (length($name) > 0) && ($name !~ /^\d+$/) )
 					{

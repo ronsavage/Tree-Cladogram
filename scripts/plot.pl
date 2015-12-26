@@ -22,6 +22,7 @@ if ($option_parser -> getoptions
 	'help',
 	'input_file=s',
 	'output_file=s',
+	'sister_step=i',
 ) )
 {
 	pod2usage(1) if ($option{'help'});
@@ -54,6 +55,7 @@ plot.pl [options]
 	-help
 	-input_file $in_file
 	-output_file $out_file
+	-sister_step $integer
 
 All switches can be reduced to a single letter.
 
@@ -92,6 +94,12 @@ This option is mandatory.
 For sample output files, see data/*.png.
 
 Default: ''.
+
+=item o -sister_step $integer
+
+This is the # of pixels (vertically) between sisters.
+
+Default: 30.
 
 =back
 
