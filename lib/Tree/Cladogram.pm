@@ -77,7 +77,7 @@ has output_file =>
 
 has root =>
 (
-	default  => sub{return ''},
+	default  => sub{return Tree::DAG_Node -> new({name => 'omni', attributes => {place => 'omni'} })},
 	is       => 'rw',
 	isa      => Any,
 	required => 0,
@@ -163,7 +163,7 @@ sub find_maximum_x
 	my($self)		= @_;
 	my($maximum_x)	= 0;
 
-	$self -> maximum_x($self -> left_margin + $self -> child_step * $self -> root -> depth_under);
+	$self -> maximum_x($self -> child_step * $self -> root -> depth_under);
 
 } # End of find_maximum_x.
 
@@ -231,9 +231,8 @@ sub plot_image
 	my($image)		= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
 	my($grey)		= Imager::Color -> new(0x80, 0x80, 0x80);
 	my($blue)		= Imager::Color -> new(0, 0, 255);
-	my($red)		= Imager::Color -> new(255, 0, 0);
 	my($white)		= Imager::Color -> new(255, 255, 255);
-	my($font_size)	= 8;
+	my($font_size)	= 8; # TODO: Explain why next line uses 2 * 8.
 	my($font)		= Imager::Font -> new(color => $blue, file => $self -> font_file, size => 2 * $font_size) || die "Error. Can't define font: " . Imager -> errstr;
 	my($x_step)		= $self -> child_step;
 
@@ -273,71 +272,44 @@ sub plot_image
 				$daughter_attributes	= $daughter_attributes[$index];
 				$name					= $daughters[$index] -> name;
 
-				if ($place eq 'middle')
+				# Draw a line (a filled box) up or down from the middle,
+				# and then draw a line from there off to the right.
+
+				$image -> box
+				(
+					box =>
+					[
+						$$middle_attributes{x},
+						$$middle_attributes{y},
+						$$middle_attributes{x} + 2,
+						$$daughter_attributes{y},
+					],
+					color	=> $grey,
+					filled	=> 1,
+				);
+
+				$image -> box
+				(
+					box =>
+					[
+						$$middle_attributes{x},
+						$$daughter_attributes{y},
+						$$daughter_attributes{x} + $x_step,
+						$$daughter_attributes{y} + 2,
+					],
+					color	=> $grey,
+					filled	=> 1,
+				);
+
+				if (length($name) > 0)
 				{
-					# Draw a line off to the left of the middle daughter of the root.
-
-					if ($node -> is_root)
-					{
-						$image -> box
-						(
-							box =>
-							[
-								$$middle_attributes{x},
-								$$middle_attributes{y},
-								$$middle_attributes{x} - $x_step + 1,
-								$$middle_attributes{y} + 2,
-							],
-							color	=> $grey,
-							filled	=> 1,
-						);
-					}
-				}
-				else
-				{
-					# Draw a line (a filled box) up or down from the middle,
-					# and then draw a line from there off to the right.
-
-=pod
-
-					$image -> box
+					$image -> string
 					(
-						box =>
-						[
-							$$middle_attributes{x},
-							$$middle_attributes{y},
-							$$middle_attributes{x} + 2,
-							$$daughter_attributes{y},
-						],
-						color	=> $grey,
-						filled	=> 1,
+						font	=> $font,
+						string	=> $name,
+						x		=> $$daughter_attributes{x} + $x_step + 4,
+						y		=> $$daughter_attributes{y} + $font_size,
 					);
-
-=cut
-
-					$image -> box
-					(
-						box =>
-						[
-							$$middle_attributes{x},
-							$$daughter_attributes{y},
-							$$daughter_attributes{x},
-							$$daughter_attributes{y} + 2,
-						],
-						color	=> $grey,
-						filled	=> 1,
-					);
-
-					if (length($name) > 0)
-					{
-						$image -> string
-						(
-							font	=> $font,
-							string	=> $name,
-							x		=> $$daughter_attributes{x} + 4,
-							y		=> $$daughter_attributes{y} + $font_size,
-						);
-					}
 				}
 			}
 
@@ -345,6 +317,28 @@ sub plot_image
 		},
 		_depth	=> 0,
 	});
+
+=pod
+
+				# Draw a line off to the left of the middle daughter of the root.
+
+				if ($node -> is_root)
+				{
+					$image -> box
+					(
+						box =>
+						[
+							$$middle_attributes{x},
+							$$middle_attributes{y},
+							$$middle_attributes{x} - $x_step + 1,
+							$$middle_attributes{y} + 2,
+						],
+						color	=> $grey,
+						filled	=> 1,
+					);
+				}
+
+=cut
 
 	$image -> write(file => $self -> output_file);
 
@@ -356,9 +350,11 @@ sub read
 {
 	my($self)	= @_;
 	my($count)	= 0;
+	my($parent)	= $self -> root;
 
 	my(%cache);
 	my(@field);
+	my($node);
 	my(%seen);
 
 	for my $line (read_lines($self -> input_file) )
@@ -400,6 +396,8 @@ sub read
 			die "Error. Input file line $count does not have enough columns\n";
 		}
 
+		# Count the # of times each node appears. This serves several purposes.
+
 		$seen{$field[0]} = 0 if (! defined $seen{$field[0]});
 		$seen{$field[0]}++;
 
@@ -411,8 +409,6 @@ sub read
 		{
 			die "Error. Input file line $count has a unknown place: '$field[1]'. It must be 'above' or 'below'\n";
 		}
-
-		#$field[2] = '' if ($field[2] =~ /^\d+$/);
 
 =pod
 
@@ -442,17 +438,31 @@ root	Below	1
 
 =cut
 
-		if (! $cache{$field[0]})
+		# The first time each node appears, give its parent a middle daughter.
+		# Note: The node called 'root' is not cached.
+
+		if ($seen{$field[0]} == 1)
 		{
-			$cache{$field[0]} = Tree::DAG_Node -> new({name => $field[0], attributes => {place => 'middle'} });
+			$node = Tree::DAG_Node -> new({name => $field[0], attributes => {place => 'middle'} });
+
+			if ($cache{$field[0]})
+			{
+				$parent	= $cache{$field[0]};
+
+				$parent -> add_daughter($node);
+			}
+			else
+			{
+				$parent -> add_daughter($node);
+			}
 		}
+
+		# Now give the middle daughter its above and below sisters, one each time thru the loop.
 
 		$cache{$field[2]} = Tree::DAG_Node -> new({name => $field[2], attributes => {place => $field[1]} });
 
-		$cache{$field[0]} -> add_daughter($cache{$field[2]});
+		$parent -> add_daughter($cache{$field[2]});
 	}
-
-	$self -> root($cache{root});
 
 } # End of read.
 
@@ -473,10 +483,11 @@ sub run
 
 	$self -> shift_image if ($self -> minimum_y <= $self -> top_margin);
 	$self -> find_maximum_y;
-	$self -> plot_image;
 
 	print 'maximum_y:  ', $self -> maximum_y, "\n";
 	print map("$_\n", @{$self -> root -> tree2string({no_attributes => 0})}), "\n";
+
+	$self -> plot_image;
 
 } # End of run.
 
@@ -492,7 +503,7 @@ sub shift_image
 						? $top_margin - $minimum_y
 						: $minimum_y < $top_margin
 							? $top_margin - $minimum_y
-							: $minimum_y - $top_margin;
+							: - $minimum_y + $top_margin;
 
 	my($attributes);
 
