@@ -413,34 +413,6 @@ sub read
 			die "Error. Input file line $count has a unknown place: '$field[1]'. It must be 'above' or 'below'\n";
 		}
 
-=pod
-
-Parent	Place	Node
-root	above	Archaeopterix lithographica
-root	below	1
-1		above	Apsaravis ukhaana
-1		below	2
-2		above	Gansus yumemensis
-2		below	3
-3		above	Ichthyornis dispar
-3		below	4
-4		above	5
-4		below	6
-5		above	Gallus gallus
-5		below	Anas clypeata
-6		above	Pasquiaornis
-6		below	7
-
-Parent	Place	Node
-root	Above	Beetles
-root	Below	1
-1		Above	Wasps, bees, ants
-1		Below	2
-2		Above	Butterflies, moths
-2		Below	Flies
-
-=cut
-
 		# The first time each node appears, give its parent a middle daughter.
 		# Note: The node called 'root' is not cached.
 
@@ -479,17 +451,8 @@ sub run
 	$self -> compute_co_ords;
 	$self -> find_maximum_x;
 	$self -> find_minimum_y;
-
-	print 'maximum_x:  ', $self -> maximum_x, "\n";
-	print 'minimum_y:  ', $self -> minimum_y, "\n";
-	print 'top_margin: ', $self -> top_margin, "\n";
-
 	$self -> shift_image if ($self -> minimum_y <= $self -> top_margin);
 	$self -> find_maximum_y;
-
-	print 'maximum_y:  ', $self -> maximum_y, "\n";
-	print map("$_\n", @{$self -> root -> tree2string({no_attributes => 0})}), "\n";
-
 	$self -> plot_image;
 
 } # End of run.
