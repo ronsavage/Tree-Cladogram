@@ -1,7 +1,7 @@
 #!/bin/bash
 
-NAME=nationalgeographic
 NAME=wikipedia
+NAME=nationalgeographic
 
 export NAME
 
