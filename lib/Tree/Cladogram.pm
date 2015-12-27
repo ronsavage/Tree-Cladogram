@@ -250,8 +250,10 @@ sub check_node_bounds
 
 					print "Overlap $name_1 & $name_2. \n";
 
-					$$bounds_2[1]			+= int(1.5 * $font_size);
-					$$bounds_2[3]			+= int(1.5 * $font_size);
+					# TODO: This always moves text down. Do we need to check 'place'?
+
+					$$bounds_2[1]			+= $font_size + 6;
+					$$bounds_2[3]			+= $font_size + 6;
 					$$attributes_2{bounds}	= $bounds_2;
 
 					$node_2 -> attributes($attributes_2);
@@ -272,7 +274,6 @@ sub check_for_overlap
 	my($self) = @_;
 
 	$self -> log('Entered check_for_overlap()');
-	#print map("$_\n", @{$self -> root -> tree2string});
 
 	my($font_size)	= $self -> font_size;
 
@@ -784,6 +785,8 @@ sub run
 	$self -> place_text;
 	$self -> check_for_overlap;
 	$self -> plot_image;
+
+	print map("$_\n", @{$self -> root -> tree2string});
 
 	$self -> log('Leaving run()');
 

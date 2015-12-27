@@ -18,6 +18,7 @@ my(%option);
 if ($option_parser -> getoptions
 (
 	\%option,
+	'font_size=i',
 	'font_file=s',
 	'help',
 	'input_file=s',
@@ -52,6 +53,7 @@ plt.pl plots a cladogram.
 plot.pl [options]
 
 	Options:
+	-font_size $integer
 	-font_file $path2font
 	-help
 	-input_file $in_file
@@ -66,6 +68,10 @@ Exit value: 0.
 =head1 OPTIONS
 
 =over 4
+
+=item o -font_size $integer
+
+The pointsize of the font.
 
 =item o -font_file $path2font
 
