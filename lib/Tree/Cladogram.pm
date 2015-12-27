@@ -441,11 +441,11 @@ sub plot_image
 
 						$image -> string
 						(
-							align	=> 1,
+							align	=> 0,
 							font	=> $self -> font,
 							string	=> $name,
 							x		=> $$bounds[0],
-							y		=> $$bounds[1] + $self -> font_size,
+							y		=> $$bounds[1],
 						);
 
 						$image -> box
