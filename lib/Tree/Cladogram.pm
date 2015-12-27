@@ -9,7 +9,7 @@ use Moo;
 
 use Tree::DAG_Node;
 
-use Types::Standard qw/Any ArrayRef Int Str/;
+use Types::Standard qw/Any Int Str/;
 
 has bar_color =>
 (
@@ -45,9 +45,9 @@ has font =>
 
 has font_color =>
 (
-	default  => sub{return [0, 0, 255]},
+	default  => sub{return '#0000ff'},
 	is       => 'rw',
-	isa      => ArrayRef,
+	isa      => Str,
 	required => 0,
 );
 
@@ -64,6 +64,14 @@ has font_size =>
 	default  => sub{return 16},
 	is       => 'rw',
 	isa      => Int,
+	required => 0,
+);
+
+has frame_color =>
+(
+	default  => sub{return '#0000ff'},
+	is       => 'rw',
+	isa      => Str,
 	required => 0,
 );
 
@@ -120,6 +128,14 @@ has output_file =>
 	default  => sub{return ''},
 	is       => 'rw',
 	isa      => Str,
+	required => 0,
+);
+
+has print_frame =>
+(
+	default  => sub{return 0},
+	is       => 'rw',
+	isa      => Int,
 	required => 0,
 );
 
@@ -186,7 +202,7 @@ our $VERSION = '1.00';
 sub BUILD
 {
 	my($self)	= @_;
-	my($color)	= Imager::Color -> new(@{$self -> font_color});
+	my($color)	= Imager::Color -> new($self -> font_color);
 
 	$self -> font
 	(
@@ -302,10 +318,7 @@ sub check_node_bounds
 
 sub check_for_overlap
 {
-	my($self) = @_;
-
-	$self -> log('Entered check_for_overlap()');
-
+	my($self)		= @_;
 	my($font_size)	= $self -> font_size;
 
 	$self -> root -> walk_down
@@ -328,10 +341,7 @@ sub check_for_overlap
 
 sub compute_co_ords
 {
-	my($self) = @_;
-
-	$self -> log('Entered compute_co_ords()');
-
+	my($self)	= @_;
 	my($x_step)	= $self -> x_step;
 	my($y_step)	= $self -> y_step;
 
@@ -386,11 +396,28 @@ sub compute_co_ords
 
 sub find_maximum_x
 {
-	my($self) = @_;
+	my($self)		= @_;
+	my($maximum_x)	= 0;
 
-	$self -> log('Entered find_maximum_x()');
+	my($attributes);
+	my($bounds);
 
-	$self -> maximum_x($self -> x_step * $self -> root -> depth_under);
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node)	= @_;
+			$attributes	= $node -> attributes;
+			$bounds		= $$attributes{bounds};
+			$maximum_x	= $$bounds[2] if ($$bounds[2] > $maximum_x);
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+	$self -> maximum_x($maximum_x);
 
 } # End of find_maximum_x.
 
@@ -398,10 +425,7 @@ sub find_maximum_x
 
 sub find_maximum_y
 {
-	my($self) = @_;
-
-	$self -> log('Entered find_maximum_y()');
-
+	my($self)		= @_;
 	my($maximum_y)	= 0;
 
 	my($attributes);
@@ -428,10 +452,7 @@ sub find_maximum_y
 
 sub find_minimum_y
 {
-	my($self) = @_;
-
-	$self -> log('Entered find_minimum_y()');
-
+	my($self)		= @_;
 	my($minimum_y)	= 0;
 
 	my($attributes);
@@ -468,10 +489,7 @@ sub log
 
 sub move_away_from_frame
 {
-	my($self) = @_;
-
-	$self -> log('Entered move_away_from_frame()');
-
+	my($self)		= @_;
 	my($minimum_y)	= $self -> minimum_y;
 	my($top_margin)	= $self -> top_margin;
 	my($x_offset)	= $self -> left_margin;
@@ -520,10 +538,7 @@ sub new_node
 
 sub place_text
 {
-	my($self) = @_;
-
-	$self -> log('Entered place_text()');
-
+	my($self)		= @_;
 	my($font_size)	= $self -> font_size;
 	my($x_step)		= $self -> x_step;
 
@@ -561,23 +576,20 @@ sub place_text
 
 sub plot_image
 {
-	my($self) = @_;
-
-	$self -> log('Entered plot_image()');
-
+	my($self)			= @_;
 	my($bar_color)		= $self -> bar_color;
 	my($bar_width)		= $self -> bar_width - 1;
 	my($final_x_step)	= $self -> final_x_step;
-	my($maximum_x)		= $self -> maximum_x + 500;
-	my($maximum_y)		= $self -> maximum_y + 100;
+	my($maximum_x)		= $self -> maximum_x + 50;
+	my($maximum_y)		= $self -> maximum_y + 50;
 	my($image)			= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
 	my($fuschia)		= Imager::Color -> new(0xff, 0, 0xff);
-	my($blue)			= Imager::Color -> new(0, 0, 255);
+	my($frame_color)	= Imager::Color -> new($self -> frame_color);
 	my($white)			= Imager::Color -> new(255, 255, 255);
 	my($x_step)			= $self -> x_step;
 
 	$image -> box(color => $white, filled => 1);
-	$image -> box(color => $blue);
+	$image -> box(color => $frame_color) if ($self -> print_frame);
 
 	my($attributes);
 	my($bounds);
@@ -700,11 +712,8 @@ sub plot_image
 		filled	=> 1,
 	);
 
-	$self -> log('Writing ' . $self -> output_file);
-
 	$image -> write(file => $self -> output_file);
-
-	$self -> log('Leaving plot_image()');
+	$self -> log('Wrote ' . $self -> output_file);
 
 } # End of plot_image.
 
@@ -712,10 +721,7 @@ sub plot_image
 
 sub read
 {
-	my($self) = @_;
-
-	$self -> log('Entered read()');
-
+	my($self)	= @_;
 	my($count)	= 0;
 	my($parent)	= $self -> root;
 
@@ -811,21 +817,17 @@ sub run
 {
 	my($self) = @_;
 
-	$self -> log('Entered run()');
-
 	$self -> read;
 	$self -> compute_co_ords;
-	$self -> find_maximum_x;
 	$self -> find_minimum_y;
 	$self -> move_away_from_frame if ($self -> minimum_y <= $self -> top_margin);
 	$self -> find_maximum_y;
 	$self -> place_text;
 	$self -> check_for_overlap;
+	$self -> find_maximum_x;
 	$self -> plot_image;
 
 	$self -> log(join('', map("$_\n", @{$self -> root -> tree2string}) ) ) if ($self -> print_tree);
-
-	$self -> log('Leaving run()');
 
 	# Return 0 for success and 1 for failure.
 
