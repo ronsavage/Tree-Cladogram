@@ -10,6 +10,7 @@ rm -rf data/$NAME.01.png $DR/$NAME.01.png
 echo $NAME.01.clad
 
 perl -Ilib scripts/plot.pl \
+	-font_file /usr/share/fonts/truetype/ttf-bitstream-vera/VeraSe.ttf \
 	-font_size 16 \
 	-i data/$NAME.01.clad \
 	-o data/$NAME.01.png \

@@ -11,6 +11,30 @@ use Tree::DAG_Node;
 
 use Types::Standard qw/Any ArrayRef Int Str/;
 
+has bar_color =>
+(
+	default  => sub{return '#7e7e7e'},
+	is       => 'rw',
+	isa      => Str,
+	required => 0,
+);
+
+has bar_width =>
+(
+	default  => sub{return 3},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
+has final_x_step =>
+(
+	default  => sub{return 30},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
 has font =>
 (
 	default  => sub{return ''},
@@ -61,7 +85,7 @@ has input_file =>
 
 has left_margin =>
 (
-	default  => sub{return 5},
+	default  => sub{return 15},
 	is       => 'rw',
 	isa      => Int,
 	required => 0,
@@ -96,6 +120,14 @@ has output_file =>
 	default  => sub{return ''},
 	is       => 'rw',
 	isa      => Str,
+	required => 0,
+);
+
+has print_tree =>
+(
+	default  => sub{return 0},
+	is       => 'rw',
+	isa      => Int,
 	required => 0,
 );
 
@@ -168,7 +200,7 @@ sub BUILD
 	);
 
 	$self -> image(Imager -> new);
-	$self -> root($self -> new_node('omni', {place => 'omni'}) );
+	$self -> root($self -> new_node('0', {place => 'middle'}) );
 
 } # End of BUILD.
 
@@ -248,10 +280,9 @@ sub check_node_bounds
 					$name_1	= $node_1 -> name;
 					$name_2	= $node_2 -> name;
 
-					print "Overlap $name_1 & $name_2. \n";
-
 					# TODO: This always moves text down. Do we need to check 'place'?
 
+					$$attributes_2{y}		+= $font_size + 6;
 					$$bounds_2[1]			+= $font_size + 6;
 					$$bounds_2[3]			+= $font_size + 6;
 					$$attributes_2{bounds}	= $bounds_2;
@@ -429,7 +460,7 @@ sub log
 {
 	my($self, $message) = @_;
 
-	print "$message. \n" if ($self -> verbose);
+	print "$message\n" if ($self -> verbose);
 
 } # End of log.
 
@@ -519,8 +550,6 @@ sub place_text
 
 			$node -> attributes($attributes);
 
-			print 'Bounds: ', $node -> name, " (@{[$bounds[0] ]}, @{[$bounds[1] ]}) and (@{[$bounds[2] ]}, @{[$bounds[3] ]}). \n";
-
 			return 1; # Keep walking.
 		},
 		_depth	=> 0,
@@ -536,14 +565,16 @@ sub plot_image
 
 	$self -> log('Entered plot_image()');
 
-	my($maximum_x)	= $self -> maximum_x + 500;
-	my($maximum_y)	= $self -> maximum_y + 100;
-	my($image)		= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
-	my($fuschia)	= Imager::Color -> new(0xff, 0, 0xff);
-	my($grey)		= Imager::Color -> new(0x80, 0x80, 0x80);
-	my($blue)		= Imager::Color -> new(0, 0, 255);
-	my($white)		= Imager::Color -> new(255, 255, 255);
-	my($x_step)		= $self -> x_step;
+	my($bar_color)		= $self -> bar_color;
+	my($bar_width)		= $self -> bar_width - 1;
+	my($final_x_step)	= $self -> final_x_step;
+	my($maximum_x)		= $self -> maximum_x + 500;
+	my($maximum_y)		= $self -> maximum_y + 100;
+	my($image)			= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
+	my($fuschia)		= Imager::Color -> new(0xff, 0, 0xff);
+	my($blue)			= Imager::Color -> new(0, 0, 255);
+	my($white)			= Imager::Color -> new(255, 255, 255);
+	my($x_step)			= $self -> x_step;
 
 	$image -> box(color => $white, filled => 1);
 	$image -> box(color => $blue);
@@ -551,6 +582,7 @@ sub plot_image
 	my($attributes);
 	my($bounds);
 	my(@daughters, @daughter_attributes, $daughter_attributes);
+	my(@final_daughters, $final_offset);
 	my($index);
 	my($middle_attributes);
 	my($name);
@@ -590,15 +622,20 @@ sub plot_image
 					[
 						$$middle_attributes{x},
 						$$middle_attributes{y},
-						$$middle_attributes{x} + 2,
+						$$middle_attributes{x} + $bar_width,
 						$$daughter_attributes{y},
 					],
-					color	=> $grey,
+					color	=> $bar_color,
 					filled	=> 1,
 				);
 
 				if ( ($node -> name ne $name) && ($name ne 'root') )
 				{
+					# Stretch the horizontal lines, but only for leaves.
+
+					@final_daughters	= $daughters[$index] -> daughters;
+					$final_offset		= $#final_daughters < 0 ? $final_x_step : 0;
+
 					# 2: Draw a line from there off to the right.
 
 					$image -> box
@@ -607,17 +644,17 @@ sub plot_image
 						[
 							$$middle_attributes{x},
 							$$daughter_attributes{y},
-							$$daughter_attributes{x} + $x_step,
-							$$daughter_attributes{y} + 2,
+							$$daughter_attributes{x} + $x_step + $final_offset,
+							$$daughter_attributes{y} + $bar_width,
 						],
-						color	=> $grey,
+						color	=> $bar_color,
 						filled	=> 1,
 					);
 
 					# 3: Draw the text.
 
-					#if ( (length($name) > 0) && ($name !~ /^\d+$/) )
-					#{
+					if ( (length($name) > 0) && ($name !~ /^\d+$/) )
+					{
 						$bounds	= $$daughter_attributes{bounds};
 
 						$image -> string
@@ -625,17 +662,17 @@ sub plot_image
 							align	=> 0,
 							font	=> $self -> font,
 							string	=> $name,
-							x		=> $$bounds[0],
+							x		=> $$bounds[0] + $final_offset,
 							y		=> $$bounds[1],
 						);
 
-						$image -> box
-						(
-							box		=> $bounds,
-							color	=> $fuschia,
-							filled	=> 0,
-						);
-					#}
+#						$image -> box
+#						(
+#							box		=> $bounds,
+#							color	=> $fuschia,
+#							filled	=> 0,
+#						);
+					}
 				}
 			}
 
@@ -656,10 +693,10 @@ sub plot_image
 		[
 			$$daughter_attributes{x},
 			$$daughter_attributes{y},
-			$$attributes{x} - $x_step + 1,
-			$$attributes{y} + 2,
+			$self -> left_margin,
+			$$attributes{y} + $bar_width,
 		],
-		color	=> $grey,
+		color	=> $bar_color,
 		filled	=> 1,
 	);
 
@@ -786,7 +823,7 @@ sub run
 	$self -> check_for_overlap;
 	$self -> plot_image;
 
-	print map("$_\n", @{$self -> root -> tree2string});
+	$self -> log(join('', map("$_\n", @{$self -> root -> tree2string}) ) ) if ($self -> print_tree);
 
 	$self -> log('Leaving run()');
 
@@ -821,7 +858,7 @@ sub run
 					+---- Flies
 
 
-	For matching data file, see data/cladogram.01.txt
+	For matching data file, see data/cladogram.01.clad:
 
 	Parent	Place	Node
 	root	above	Beetles
@@ -883,7 +920,7 @@ sub run
 													|
 													+--- Hesperornis regalis
 
-	For matching data file, see data/nationalgeographic.01.clad
+	For matching data file, see data/nationalgeographic.01.clad:
 
 	Parent	Place	Node
 	root	above	Archaeopterix lithographica

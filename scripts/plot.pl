@@ -23,7 +23,7 @@ if ($option_parser -> getoptions
 	'help',
 	'input_file=s',
 	'output_file=s',
-	'sister_step=i',
+	'print_tree=i',
 	'verbose=i',
 ) )
 {
@@ -58,8 +58,8 @@ plot.pl [options]
 	-help
 	-input_file $in_file
 	-output_file $out_file
-	-sister_step $integer
-	-verbose $integer
+	-print_tree $Boolean
+	-verbose $Boolean
 
 All switches can be reduced to a single letter.
 
@@ -103,13 +103,13 @@ For sample output files, see data/*.png.
 
 Default: ''.
 
-=item o -sister_step $integer
+=item o -print_tree $Boolean
 
-This is the # of pixels (vertically) between sisters.
+If set, /and/ if verbose it set, print the tree constructed by reading the input file.
 
-Default: 30.
+Default: 0 (no output).
 
-=item o -verbose $integer
+=item o -verbose $Boolean
 
 Set to 1 to display progress.
 
