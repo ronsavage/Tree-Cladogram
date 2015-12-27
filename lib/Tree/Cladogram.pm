@@ -174,6 +174,98 @@ sub BUILD
 
 # ------------------------------------------------
 
+sub check_rectangle_within_rectangle
+{
+	my($self, $node_1, $node_2, $uid_1, $uid_2, $bounds_1, $bounds_2) = @_;
+	my($name_1)		= $node_1 -> name;
+	my($name_2)		= $node_2 -> name;
+	my($result)		= 0;
+	my($x_min_1)	= $$bounds_1[0];
+	my($y_min_1)	= $$bounds_1[1];
+	my($x_max_1)	= $$bounds_1[2];
+	my($y_max_1)	= $$bounds_1[3];
+	my($x_min_2)	= $$bounds_2[0];
+	my($y_min_2)	= $$bounds_2[1];
+	my($x_max_2)	= $$bounds_2[2];
+	my($y_max_2)	= $$bounds_2[3];
+
+	if ( ($x_min_1 >= $x_min_2) && ($x_min_1 <= $x_max_2)
+		&& ($y_min_1 >= $y_min_2) && ($y_min_1 <= $y_max_2)
+		&& ($x_max_1 >= $x_min_2) && ($x_max_1 <= $x_max_2)
+		&& ($y_max_1 >= $y_min_2) && ($y_max_1 <= $y_max_2) )
+	{
+		$result = 1;
+
+		print "Overlap $name_1 & $name_2. ($x_min_1, $y_min_1) .. ($x_max_1, $y_max_1) cf ($x_min_2, $y_min_2) ... ($x_max_2, $y_max_2). \n";
+	}
+
+} # End of check_rectangle_within_rectangle.
+
+# ------------------------------------------------
+
+sub check_node_bounds
+{
+	my($self, $node_1)	= @_;
+	my($attributes_1)	= $node_1 -> attributes;
+	my($bounds_1)		= $$attributes_1{bounds};
+	my($uid_1)			= $$attributes_1{uid};
+
+	my($attributes_2);
+	my($bounds_2);
+	my($node_uid, $node_bounds);
+	my($uid_2);
+
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node_2)		= @_;
+			$attributes_2	= $node_2 -> attributes;
+			$bounds_2		= $$attributes_2{bounds};
+			$uid_2			= $$attributes_2{uid};
+
+			if ($uid_1 != $uid_2)
+			{
+				$self -> check_rectangle_within_rectangle($node_1, $node_2, $uid_1, $uid_2, $bounds_1, $bounds_2);
+			}
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+} # End of check_node_bounds.
+
+# ------------------------------------------------
+
+sub check_for_overlap
+{
+	my($self) = @_;
+
+	$self -> log('Entered check_for_overlap()');
+	#print map("$_\n", @{$self -> root -> tree2string});
+
+	my($font_size)	= $self -> font_size;
+
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node) = @_;
+
+			$self -> check_node_bounds($node);
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+} # End of check_for_overlap.
+
+# ------------------------------------------------
+
 sub compute_co_ords
 {
 	my($self) = @_;
@@ -314,10 +406,51 @@ sub log
 
 # ------------------------------------------------
 
+sub move_away_from_frame
+{
+	my($self) = @_;
+
+	$self -> log('Entered move_away_from_frame()');
+
+	my($minimum_y)	= $self -> minimum_y;
+	my($top_margin)	= $self -> top_margin;
+	my($x_offset)	= $self -> left_margin;
+	my($y_offset)	= $minimum_y <= 0
+						? $top_margin - $minimum_y
+						: $minimum_y < $top_margin
+							? $top_margin - $minimum_y
+							: - $minimum_y + $top_margin;
+
+	my($attributes);
+
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node)		= @_;
+			$attributes		= $node -> attributes;
+			$$attributes{x}	+= $x_offset;
+			$$attributes{y}	+= $y_offset;
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+	$self -> minimum_y($minimum_y);
+
+} # End of move_away_from_frame.
+
+# ------------------------------------------------
+
 sub new_node
 {
 	my($self, $name, $attributes)  = @_;
-	$$attributes{uid}  = $self -> uid($self -> uid + 1);
+	$$attributes{bounds}	= [];
+	$$attributes{shifted}	= 0;
+	$$attributes{scaffold}	= 0;
+	$$attributes{uid}		= $self -> uid($self -> uid + 1);
 
 	return Tree::DAG_Node -> new({name => $name, attributes => $attributes});
 
@@ -356,6 +489,8 @@ sub place_text
 			$$attributes{bounds} = [@bounds];
 
 			$node -> attributes($attributes);
+
+			print 'Bounds: ', $node -> name, " (@{[$bounds[0] ]}, @{[$bounds[2] ]}) and (@{[$bounds[1] ]}, @{[$bounds[3] ]}). \n";
 
 			return 1; # Keep walking.
 		},
@@ -616,9 +751,10 @@ sub run
 	$self -> compute_co_ords;
 	$self -> find_maximum_x;
 	$self -> find_minimum_y;
-	$self -> shift_image if ($self -> minimum_y <= $self -> top_margin);
+	$self -> move_away_from_frame if ($self -> minimum_y <= $self -> top_margin);
 	$self -> find_maximum_y;
 	$self -> place_text;
+	$self -> check_for_overlap;
 	$self -> plot_image;
 
 	$self -> log('Leaving run()');
@@ -628,44 +764,6 @@ sub run
 	return 0;
 
 } # End of run.
-
-# ------------------------------------------------
-
-sub shift_image
-{
-	my($self) = @_;
-
-	$self -> log('Entered shift_image()');
-
-	my($minimum_y)	= $self -> minimum_y;
-	my($top_margin)	= $self -> top_margin;
-	my($x_offset)	= $self -> left_margin;
-	my($y_offset)	= $minimum_y <= 0
-						? $top_margin - $minimum_y
-						: $minimum_y < $top_margin
-							? $top_margin - $minimum_y
-							: - $minimum_y + $top_margin;
-
-	my($attributes);
-
-	$self -> root -> walk_down
-	({
-		callback =>
-		sub
-		{
-			my($node)		= @_;
-			$attributes		= $node -> attributes;
-			$$attributes{x}	+= $x_offset;
-			$$attributes{y}	+= $y_offset;
-
-			return 1; # Keep walking.
-		},
-		_depth	=> 0,
-	});
-
-	$self -> minimum_y($minimum_y);
-
-} # End of shift_image.
 
 # ------------------------------------------------
 
