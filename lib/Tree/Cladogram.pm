@@ -141,7 +141,7 @@ has x_step =>
 
 has y_step =>
 (
-	default  => sub{return 30},
+	default  => sub{return 40},
 	is       => 'rw',
 	isa      => Int,
 	required => 0,
@@ -174,30 +174,45 @@ sub BUILD
 
 # ------------------------------------------------
 
+sub check_point_within_rectangle
+{
+	my($self, $bounds_1, $x, $y) = @_;
+	my($result)	= 0;
+	my($x_min)	= $$bounds_1[0];
+	my($y_min)	= $$bounds_1[1];
+	my($x_max)	= $$bounds_1[2];
+	my($y_max)	= $$bounds_1[3];
+
+	if (	($x >= $x_min) && ($x <= $x_max)
+		&&	($y >= $y_min) && ($y <= $y_max) )
+	{
+		$result = 1;
+	}
+
+	return $result;
+
+} # End of check_point_within_rectangle.
+
+# ------------------------------------------------
+
 sub check_rectangle_within_rectangle
 {
-	my($self, $node_1, $node_2, $uid_1, $uid_2, $bounds_1, $bounds_2) = @_;
-	my($name_1)		= $node_1 -> name;
-	my($name_2)		= $node_2 -> name;
+	my($self, $bounds_1, $bounds_2) = @_;
 	my($result)		= 0;
-	my($x_min_1)	= $$bounds_1[0];
-	my($y_min_1)	= $$bounds_1[1];
-	my($x_max_1)	= $$bounds_1[2];
-	my($y_max_1)	= $$bounds_1[3];
 	my($x_min_2)	= $$bounds_2[0];
 	my($y_min_2)	= $$bounds_2[1];
 	my($x_max_2)	= $$bounds_2[2];
 	my($y_max_2)	= $$bounds_2[3];
 
-	if ( ($x_min_1 >= $x_min_2) && ($x_min_1 <= $x_max_2)
-		&& ($y_min_1 >= $y_min_2) && ($y_min_1 <= $y_max_2)
-		&& ($x_max_1 >= $x_min_2) && ($x_max_1 <= $x_max_2)
-		&& ($y_max_1 >= $y_min_2) && ($y_max_1 <= $y_max_2) )
+	if (	$self -> check_point_within_rectangle($bounds_1, $x_min_2, $y_min_2)
+		||	$self -> check_point_within_rectangle($bounds_1, $x_max_2, $y_min_2)
+		||	$self -> check_point_within_rectangle($bounds_1, $x_min_2, $y_max_2)
+		||	$self -> check_point_within_rectangle($bounds_1, $x_max_2, $y_max_2) )
 	{
 		$result = 1;
-
-		print "Overlap $name_1 & $name_2. ($x_min_1, $y_min_1) .. ($x_max_1, $y_max_1) cf ($x_min_2, $y_min_2) ... ($x_max_2, $y_max_2). \n";
 	}
+
+	return $result;
 
 } # End of check_rectangle_within_rectangle.
 
@@ -206,13 +221,14 @@ sub check_rectangle_within_rectangle
 sub check_node_bounds
 {
 	my($self, $node_1)	= @_;
+	my($font_size)		= $self -> font_size;
 	my($attributes_1)	= $node_1 -> attributes;
 	my($bounds_1)		= $$attributes_1{bounds};
 	my($uid_1)			= $$attributes_1{uid};
 
 	my($attributes_2);
 	my($bounds_2);
-	my($node_uid, $node_bounds);
+	my($name_1, $name_2);
 	my($uid_2);
 
 	$self -> root -> walk_down
@@ -225,9 +241,21 @@ sub check_node_bounds
 			$bounds_2		= $$attributes_2{bounds};
 			$uid_2			= $$attributes_2{uid};
 
-			if ($uid_1 != $uid_2)
+			if ($uid_1 < $uid_2)
 			{
-				$self -> check_rectangle_within_rectangle($node_1, $node_2, $uid_1, $uid_2, $bounds_1, $bounds_2);
+				if ($self -> check_rectangle_within_rectangle($bounds_1, $bounds_2) )
+				{
+					$name_1	= $node_1 -> name;
+					$name_2	= $node_2 -> name;
+
+					print "Overlap $name_1 & $name_2. \n";
+
+					$$bounds_2[1]			+= int(1.5 * $font_size);
+					$$bounds_2[3]			+= int(1.5 * $font_size);
+					$$attributes_2{bounds}	= $bounds_2;
+
+					$node_2 -> attributes($attributes_2);
+				}
 			}
 
 			return 1; # Keep walking.
@@ -490,7 +518,7 @@ sub place_text
 
 			$node -> attributes($attributes);
 
-			print 'Bounds: ', $node -> name, " (@{[$bounds[0] ]}, @{[$bounds[2] ]}) and (@{[$bounds[1] ]}, @{[$bounds[3] ]}). \n";
+			print 'Bounds: ', $node -> name, " (@{[$bounds[0] ]}, @{[$bounds[1] ]}) and (@{[$bounds[2] ]}, @{[$bounds[3] ]}). \n";
 
 			return 1; # Keep walking.
 		},
