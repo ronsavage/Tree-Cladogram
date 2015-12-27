@@ -324,15 +324,18 @@ sub place_text
 		{
 			my($node)	= @_;
 			$attributes	= $node -> attributes;
-			@bounds		= $self -> image
+			@bounds		= $self -> font -> align
 							(
 								halign	=> 'left',
-								image	=> undef,		# Don't draw on the image.
+								image	=> undef,
 								string	=> $node -> name,
-								valign	=> 'baseline',	# The default.
+								valign	=> 'baseline',
 								x		=> $$attributes{x} + $x_step + 4,
-								y		=> $$attributes{y} + $font_size,
+								y		=> $$attributes{y} + int($font_size / 2),
 							);
+			$$attributes{bounds} = [@bounds];
+
+			$node -> attributes($attributes);
 
 			return 1; # Keep walking.
 		},
@@ -351,26 +354,23 @@ sub plot_image
 
 	my($maximum_x)	= $self -> maximum_x + 500;
 	my($maximum_y)	= $self -> maximum_y + 100;
-	my($image)		= Imager -> new;
+	my($image)		= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
 	my($fuschia)	= Imager::Color -> new(0xff, 0, 0xff);
 	my($grey)		= Imager::Color -> new(0x80, 0x80, 0x80);
 	my($blue)		= Imager::Color -> new(0, 0, 255);
 	my($white)		= Imager::Color -> new(255, 255, 255);
-	my($font_size)	= 8; # TODO: Explain why next line uses 2 * 8.
 	my($x_step)		= $self -> x_step;
 
 	$image -> box(color => $white, filled => 1);
 	$image -> box(color => $blue);
 
 	my($attributes);
-	my($box_object);
+	my($bounds);
 	my(@daughters, @daughter_attributes, $daughter_attributes);
 	my($index);
 	my($middle_attributes);
 	my($name);
 	my($parent_attributes, $place, %place);
-	my($x);
-	my($y);
 
 	$self -> root -> walk_down
 	({
@@ -378,6 +378,9 @@ sub plot_image
 		sub
 		{
 			my($node)	= @_;
+
+			$self -> log('Plotting ' . $node -> name);
+
 			$attributes	= $node -> attributes;
 			@daughters	= $node -> daughters;
 			%place		= ();
@@ -409,7 +412,7 @@ sub plot_image
 						$$middle_attributes{x} + 2,
 						$$daughter_attributes{y},
 					],
-					color	=> $fuschia,
+					color	=> $grey,
 					filled	=> 1,
 				);
 
@@ -432,33 +435,26 @@ sub plot_image
 
 					# 3: Draw the text.
 
-=pod
-
-					if ( (length($name) > 0) && ($name !~ /^\d+$/) )
-					{
-						$x	= $$daughter_attributes{x} + $x_step + 4;
-						$y	= $$daughter_attributes{y} + $font_size;
-
-						$box_object = $self -> font -> bounding_box
-						(
-							string	=> $name,
-							x		=> $x,
-							y		=> $y,
-						);
-
-						print "Print. name: $name \@ ($x, $y). display_width: ", $box_object -> display_width, ". \n";
+					#if ( (length($name) > 0) && ($name !~ /^\d+$/) )
+					#{
+						$bounds	= $$daughter_attributes{bounds};
 
 						$image -> string
 						(
+							align	=> 1,
 							font	=> $self -> font,
 							string	=> $name,
-							x		=> $x,
-							y		=> $y,
+							x		=> $$bounds[0],
+							y		=> $$bounds[1] + $self -> font_size,
 						);
-					}
 
-=cut
-
+						$image -> box
+						(
+							box		=> $bounds,
+							color	=> $fuschia,
+							filled	=> 0,
+						);
+					#}
 				}
 			}
 
@@ -486,7 +482,11 @@ sub plot_image
 		filled	=> 1,
 	);
 
+	$self -> log('Writing ' . $self -> output_file);
+
 	$image -> write(file => $self -> output_file);
+
+	$self -> log('Leaving plot_image()');
 
 } # End of plot_image.
 
@@ -600,8 +600,8 @@ sub run
 	$self -> find_maximum_x;
 	$self -> find_minimum_y;
 	$self -> shift_image if ($self -> minimum_y <= $self -> top_margin);
-	$self -> place_text;
 	$self -> find_maximum_y;
+	$self -> place_text;
 	$self -> plot_image;
 
 	$self -> log('Leaving run()');

@@ -5,7 +5,7 @@ NAME=wikipedia
 
 export NAME
 
-rm $DR/$NAME.01.png
+rm -rf data/$NAME.01.png $DR/$NAME.01.png
 
 echo $NAME.01.clad
 
