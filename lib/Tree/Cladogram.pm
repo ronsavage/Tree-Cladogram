@@ -101,7 +101,7 @@ has output_file =>
 
 has root =>
 (
-	default  => sub{return Tree::DAG_Node -> new({name => 'omni', attributes => {place => 'omni'} })},
+	default  => sub{return ''},
 	is       => 'rw',
 	isa      => Any,
 	required => 0,
@@ -110,6 +110,14 @@ has root =>
 has top_margin =>
 (
 	default  => sub{return 15},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
+has uid =>
+(
+	default  => sub{return 0},
 	is       => 'rw',
 	isa      => Int,
 	required => 0,
@@ -160,6 +168,7 @@ sub BUILD
 	);
 
 	$self -> image(Imager -> new);
+	$self -> root($self -> new_node('omni', {place => 'omni'}) );
 
 } # End of BUILD.
 
@@ -305,6 +314,17 @@ sub log
 
 # ------------------------------------------------
 
+sub new_node
+{
+	my($self, $name, $attributes)  = @_;
+	$$attributes{uid}  = $self -> uid($self -> uid + 1);
+
+	return Tree::DAG_Node -> new({name => $name, attributes => $attributes});
+
+} # End of new_node.
+
+# ------------------------------------------------
+
 sub place_text
 {
 	my($self) = @_;
@@ -378,9 +398,6 @@ sub plot_image
 		sub
 		{
 			my($node)	= @_;
-
-			$self -> log('Plotting ' . $node -> name);
-
 			$attributes	= $node -> attributes;
 			@daughters	= $node -> daughters;
 			%place		= ();
@@ -564,7 +581,7 @@ sub read
 
 		if ($seen{$field[0]} == 1)
 		{
-			$node = Tree::DAG_Node -> new({name => $field[0], attributes => {place => 'middle'} });
+			$node = $self -> new_node($field[0], {place => 'middle'});
 
 			if ($cache{$field[0]})
 			{
@@ -580,7 +597,7 @@ sub read
 
 		# Now give the middle daughter its above and below sisters, one each time thru the loop.
 
-		$cache{$field[2]} = Tree::DAG_Node -> new({name => $field[2], attributes => {place => $field[1]} });
+		$cache{$field[2]} = $self -> new_node($field[2], {place => $field[1]});
 
 		$parent -> add_daughter($cache{$field[2]});
 	}
