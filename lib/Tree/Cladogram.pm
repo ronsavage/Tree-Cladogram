@@ -43,38 +43,6 @@ has final_x_step =>
 	required => 0,
 );
 
-has font =>		# Internal.
-(
-	default  => sub{return ''},
-	is       => 'rw',
-	isa      => Any,
-	required => 0,
-);
-
-has font_color =>
-(
-	default  => sub{return '#0000ff'},
-	is       => 'rw',
-	isa      => Str,
-	required => 0,
-);
-
-has font_file =>
-(
-	default  => sub{return '/usr/local/share/fonts/truetype/gothic.ttf'},
-	is       => 'rw',
-	isa      => Str,
-	required => 0,
-);
-
-has font_size =>
-(
-	default  => sub{return 16},
-	is       => 'rw',
-	isa      => Int,
-	required => 0,
-);
-
 has frame_color =>
 (
 	default  => sub{return '#0000ff'},
@@ -96,6 +64,38 @@ has input_file =>
 	default  => sub{return ''},
 	is       => 'rw',
 	isa      => Str,
+	required => 0,
+);
+
+has leaf_font =>		# Internal.
+(
+	default  => sub{return ''},
+	is       => 'rw',
+	isa      => Any,
+	required => 0,
+);
+
+has leaf_font_color =>
+(
+	default  => sub{return '#0000ff'},
+	is       => 'rw',
+	isa      => Str,
+	required => 0,
+);
+
+has leaf_font_file =>
+(
+	default  => sub{return '/usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf'},
+	is       => 'rw',
+	isa      => Str,
+	required => 0,
+);
+
+has leaf_font_size =>
+(
+	default  => sub{return 16},
+	is       => 'rw',
+	isa      => Int,
 	required => 0,
 );
 
@@ -155,6 +155,54 @@ has root =>		# Internal.
 	required => 0,
 );
 
+has title =>
+(
+	default  => sub{return ''},
+	is       => 'rw',
+	isa      => Str,
+	required => 0,
+);
+
+has title_font =>		# Internal.
+(
+	default  => sub{return ''},
+	is       => 'rw',
+	isa      => Any,
+	required => 0,
+);
+
+has title_font_color =>
+(
+	default  => sub{return '#000000'},
+	is       => 'rw',
+	isa      => Str,
+	required => 0,
+);
+
+has title_font_file =>
+(
+	default  => sub{return '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf'},
+	is       => 'rw',
+	isa      => Str,
+	required => 0,
+);
+
+has title_font_size =>
+(
+	default  => sub{return 16},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
+has title_width =>
+(
+	default  => sub{return 0},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
 has top_margin =>
 (
 	default  => sub{return 15},
@@ -201,19 +249,43 @@ our $VERSION = '1.00';
 
 sub BUILD
 {
-	my($self)	= @_;
-	my($color)	= Imager::Color -> new($self -> font_color);
+	my($self) = @_;
 
-	$self -> font
+	$self -> leaf_font
 	(
 		Imager::Font -> new
 		(
-			color	=> $color,
-			file	=> $self -> font_file,
-			size	=> $self -> font_size,
+			color	=> Imager::Color -> new($self -> leaf_font_color),
+			file	=> $self -> leaf_font_file,
+			size	=> $self -> leaf_font_size,
 			utf8	=> 1
-		) || die "Error. Can't define font: " . Imager -> errstr
+		) || die "Error. Can't define leaf font: " . Imager -> errstr
 	);
+	$self -> title_font
+	(
+		Imager::Font -> new
+		(
+			color	=> Imager::Color -> new($self -> title_font_color),
+			file	=> $self -> title_font_file,
+			size	=> $self -> title_font_size,
+			utf8	=> 1
+		) || die "Error. Can't define title font: " . Imager -> errstr
+	);
+
+	if (length($self -> title) )
+	{
+		my(@bounds) = $self -> title_font -> align
+						(
+							halign	=> 'left',
+							image	=> undef,
+							string	=> $self -> title,
+							valign	=> 'baseline',
+							x		=> 0,
+							y		=> 0,
+						);
+
+		$self -> title_width($bounds[2]);
+	}
 
 	$self -> image(Imager -> new);
 	$self -> root($self -> new_node('0', {place => 'middle'}) );
@@ -269,7 +341,7 @@ sub check_rectangle_within_rectangle
 sub check_node_bounds
 {
 	my($self, $node_1)	= @_;
-	my($font_size)		= $self -> font_size;
+	my($leaf_font_size)	= $self -> leaf_font_size;
 	my($attributes_1)	= $node_1 -> attributes;
 	my($bounds_1)		= $$attributes_1{bounds};
 	my($uid_1)			= $$attributes_1{uid};
@@ -298,9 +370,9 @@ sub check_node_bounds
 
 					# TODO: This always moves text down. Do we need to check 'place'?
 
-					$$attributes_2{y}		+= $font_size + 6;
-					$$bounds_2[1]			+= $font_size + 6;
-					$$bounds_2[3]			+= $font_size + 6;
+					$$attributes_2{y}		+= $leaf_font_size + 6;
+					$$bounds_2[1]			+= $leaf_font_size + 6;
+					$$bounds_2[3]			+= $leaf_font_size + 6;
 					$$attributes_2{bounds}	= $bounds_2;
 
 					$node_2 -> attributes($attributes_2);
@@ -318,8 +390,7 @@ sub check_node_bounds
 
 sub check_for_overlap
 {
-	my($self)		= @_;
-	my($font_size)	= $self -> font_size;
+	my($self) = @_;
 
 	$self -> root -> walk_down
 	({
@@ -489,6 +560,7 @@ sub draw_image
 	# Draw a line off to the left of the middle daughter of the root.
 
 	$self -> draw_root_branch($image);
+	$self -> draw_title($image, $maximum_x, $maximum_y);
 
 	$image -> write(file => $self -> output_file);
 	$self -> log('Wrote ' . $self -> output_file);
@@ -509,7 +581,7 @@ sub draw_leaf_name
 		$image -> string
 		(
 			align	=> 0,
-			font	=> $self -> font,
+			font	=> $self -> leaf_font,
 			string	=> $name,
 			x		=> $$bounds[0] + $final_offset,
 			y		=> $$bounds[1],
@@ -550,6 +622,37 @@ sub draw_root_branch
 	);
 
 } # End of draw_root_branch.
+
+# ------------------------------------------------
+
+sub draw_title
+{
+	my($self, $image, $maximum_x, $maximum_y) = @_;
+	my($title) = $self -> title;
+
+	if (length($title) > 0)
+	{
+		my(@bounds) = $self -> title_font -> align
+						(
+							halign	=> 'left',
+							image	=> undef,
+							string	=> $title,
+							valign	=> 'baseline',
+							x		=> 0,
+							y		=> 0,
+						);
+
+		$image -> string
+		(
+			align	=> 0,
+			font	=> $self -> title_font,
+			string	=> $title,
+			x		=> int( ($maximum_x - $bounds[2]) / 2),
+			y		=> $maximum_y - $self -> top_margin,
+		);
+	}
+
+} # End of draw_title.
 
 # ------------------------------------------------
 
@@ -599,7 +702,10 @@ sub find_maximum_x
 		_depth	=> 0,
 	});
 
-	$self -> maximum_x($maximum_x + $self -> final_x_step);
+	$maximum_x += $self -> final_x_step;
+	$maximum_x = $self -> title_width if ($self -> title_width > $maximum_x);
+
+	$self -> maximum_x($maximum_x);
 
 } # End of find_maximum_x.
 
@@ -722,9 +828,9 @@ sub new_node
 
 sub place_text
 {
-	my($self)		= @_;
-	my($font_size)	= $self -> font_size;
-	my($x_step)		= $self -> x_step;
+	my($self)			= @_;
+	my($leaf_font_size)	= $self -> leaf_font_size;
+	my($x_step)			= $self -> x_step;
 
 	my($attributes);
 	my(@bounds);
@@ -736,14 +842,14 @@ sub place_text
 		{
 			my($node)	= @_;
 			$attributes	= $node -> attributes;
-			@bounds		= $self -> font -> align
+			@bounds		= $self -> leaf_font -> align
 							(
 								halign	=> 'left',
 								image	=> undef,
 								string	=> $node -> name,
 								valign	=> 'baseline',
 								x		=> $$attributes{x} + $x_step + 4,
-								y		=> $$attributes{y} + int($font_size / 2),
+								y		=> $$attributes{y} + int($leaf_font_size / 2),
 							);
 			$$attributes{bounds} = [@bounds];
 
@@ -995,10 +1101,10 @@ C<Tree::Cladogram> - Render a tree as a cladogram
 
 	perl -Ilib scripts/plot.pl \
 		-draw_frame 1 \
-		-font_file /usr/share/fonts/truetype/ttf-bitstream-vera/VeraSe.ttf \
-		-font_size 16 \
 		-frame_color \#0000ff \
 		-input_file data/nationalgeographic.01.clad \
+		-leaf_font_size 16 \
+		-leaf_font_file /usr/share/fonts/truetype/ttf-bitstream-vera/VeraSe.ttf \
 		-output_file data/nationalgeographic.01.png \
 		-verbose 1
 
@@ -1081,19 +1187,19 @@ Specify the length of the final branch leading to the names of the leaves.
 
 Default: 30 (px).
 
-=item o font_color => $string
+=item o leaf_font_color => $string
 
-Specify the color of the name of each leaf.
+Specify the font color of the name of each leaf.
 
 Default: '#0000ff'.
 
-=item o font_file => $string
+=item o leaf_font_file => $string
 
 Specify the name of the font file to use for the names of the leaves.
 
-Default: '/usr/local/share/fonts/truetype/gothic.ttf'.
+Default: '/usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf'.
 
-=item o font_size => $integer
+=item o leaf_font_size => $integer
 
 Specify the size of the text used for the name of each leaf.
 
@@ -1197,24 +1303,6 @@ Get or set the horizontal length of the branch leading to leaf names.
 
 C<final_x_step> is a parameter to L</new()>.
 
-=head2 font_color(([$string])
-
-Get or set the color of the text used to draw leaf names.
-
-C<font_color> is a parameter to L</new()>.
-
-=head2 font_file(([$string])
-
-Get or set the name of the font file.
-
-C<font_file> is a parameter to L</new()>.
-
-=head2 font_size(([$integer])
-
-Get or set the size of the font used to draw leaf names.
-
-C<font_size> is a parameter to L</new()>.
-
 =head2 frame_color(([$string])
 
 Get or set the color of the frame.
@@ -1226,6 +1314,24 @@ C<frame_color> is a parameter to L</new()>.
 Get or set the name of the input file.
 
 C<input_file> is a parameter to L</new()>.
+
+=head2 leaf_font_color(([$string])
+
+Get or set the font color of the text used to draw leaf names.
+
+C<leaf_font_color> is a parameter to L</new()>.
+
+=head2 leaf_font_file(([$string])
+
+Get or set the name of the font file.
+
+C<leaf_font_file> is a parameter to L</new()>.
+
+=head2 leaf_font_size(([$integer])
+
+Get or set the size of the font used to draw leaf names.
+
+C<leaf_font_size> is a parameter to L</new()>.
 
 =head2 left_margin(([$integer])
 

@@ -19,13 +19,15 @@ if ($option_parser -> getoptions
 (
 	\%option,
 	'draw_frame=i',
-	'font_size=i',
-	'font_file=s',
 	'frame_color=s',
 	'help',
 	'input_file=s',
+	'leaf_font_file=s',
+	'leaf_font_size=i',
 	'output_file=s',
 	'print_tree=i',
+	'title=s',
+	'title_font_file=s',
 	'verbose=i',
 ) )
 {
@@ -56,13 +58,17 @@ plot.pl [options]
 
 	Options:
 	-draw_frame $Boolean
-	-font_size $integer
-	-font_file $path2font
 	-frame_color $string
 	-help
 	-input_file $in_file
+	-leaf_font_color $string
+	-leaf_font_file $path2font
+	-leaf_font_size $integer
 	-output_file $out_file
 	-print_tree $Boolean
+	-title $string
+	-title_font_color $string
+	-title_font_file $path2font
 	-verbose $Boolean
 
 All switches can be reduced to a single letter.
@@ -78,16 +84,6 @@ Exit value: 0.
 If set, include the frame in the output image.
 
 Default: 0 (no frame).
-
-=item o -font_size $integer
-
-The pointsize of the font.
-
-=item o -font_file $path2font
-
-The path to a font file.
-
-Default: /usr/local/share/fonts/truetype/gothic.ttf
 
 =item o -frame_color $string
 
@@ -113,6 +109,24 @@ For sample input files, see data/*.clad.
 
 Default: ''.
 
+=item o -leaf_font_color $string
+
+The color of the font used for the names of the leaves.
+
+Default: '#0000ff' (blue).
+
+=item o -leaf_font_file $path2font
+
+The path to a font file to be used to the names of leaves.
+
+Default: /usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf.
+
+This file ships as data/VeraBd.ttf.
+
+=item o -leaf_font_size $integer
+
+The pointsize of the font.
+
 =item o -output_file $out_file
 
 The path of the output image file to wite.
@@ -128,6 +142,28 @@ Default: ''.
 If set, /and/ if verbose it set, print the tree constructed by reading the input file.
 
 Default: 0 (no output).
+
+=item o -title $string
+
+Add a title at the bottom of the image.
+
+See scripts/plot.sh for how to protect strings-with-spaces from the shell.
+
+Default: '' (no title).
+
+=item o -title_font_color $string
+
+The color of the font used for the title.
+
+Default: '#000000' (black).
+
+=item o -title_font_file $path2font
+
+The path to a font file to be used for the title.
+
+Default: /usr/share/fonts/truetype/freefont/FreeSansBold.ttf.
+
+This file ships as data/FreeSansBold.ttf.
 
 =item o -verbose $Boolean
 
