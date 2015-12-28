@@ -18,13 +18,13 @@ my(%option);
 if ($option_parser -> getoptions
 (
 	\%option,
+	'draw_frame=i',
 	'font_size=i',
 	'font_file=s',
 	'frame_color=s',
 	'help',
 	'input_file=s',
 	'output_file=s',
-	'print_frame=i',
 	'print_tree=i',
 	'verbose=i',
 ) )
@@ -55,13 +55,13 @@ plt.pl plots a cladogram.
 plot.pl [options]
 
 	Options:
+	-draw_frame $Boolean
 	-font_size $integer
 	-font_file $path2font
 	-frame_color $string
 	-help
 	-input_file $in_file
 	-output_file $out_file
-	-print_frame $Boolean
 	-print_tree $Boolean
 	-verbose $Boolean
 
@@ -72,6 +72,12 @@ Exit value: 0.
 =head1 OPTIONS
 
 =over 4
+
+=item o -draw_frame $Boolean
+
+If set, include the frame in the output image.
+
+Default: 0 (no frame).
 
 =item o -font_size $integer
 
@@ -91,7 +97,7 @@ Use a word - 'blue' or a HTML color specification - '#ff0000'.
 
 Default: '#0000ff'.
 
-See also print_frame.
+See also C<draw_frame>.
 
 =item o -help
 
@@ -116,12 +122,6 @@ This option is mandatory.
 For sample output files, see data/*.png.
 
 Default: ''.
-
-=item o -print_frame $Boolean
-
-If set, include the frame in the output image.
-
-Default: 0 (no frame).
 
 =item o -print_tree $Boolean
 

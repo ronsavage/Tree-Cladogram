@@ -11,7 +11,7 @@ use Tree::DAG_Node;
 
 use Types::Standard qw/Any Int Str/;
 
-has bar_color =>
+has branch_color =>
 (
 	default  => sub{return '#7e7e7e'},
 	is       => 'rw',
@@ -19,9 +19,17 @@ has bar_color =>
 	required => 0,
 );
 
-has bar_width =>
+has branch_width =>
 (
 	default  => sub{return 3},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
+has draw_frame =>
+(
+	default  => sub{return 0},
 	is       => 'rw',
 	isa      => Int,
 	required => 0,
@@ -35,7 +43,7 @@ has final_x_step =>
 	required => 0,
 );
 
-has font =>
+has font =>		# Internal.
 (
 	default  => sub{return ''},
 	is       => 'rw',
@@ -75,7 +83,7 @@ has frame_color =>
 	required => 0,
 );
 
-has image =>
+has image =>		# Internal.
 (
 	default  => sub{return ''},
 	is       => 'rw',
@@ -131,14 +139,6 @@ has output_file =>
 	required => 0,
 );
 
-has print_frame =>
-(
-	default  => sub{return 0},
-	is       => 'rw',
-	isa      => Int,
-	required => 0,
-);
-
 has print_tree =>
 (
 	default  => sub{return 0},
@@ -147,7 +147,7 @@ has print_tree =>
 	required => 0,
 );
 
-has root =>
+has root =>		# Internal.
 (
 	default  => sub{return ''},
 	is       => 'rw',
@@ -163,7 +163,7 @@ has top_margin =>
 	required => 0,
 );
 
-has uid =>
+has uid =>		# Internal.
 (
 	default  => sub{return 0},
 	is       => 'rw',
@@ -417,7 +417,7 @@ sub find_maximum_x
 		_depth	=> 0,
 	});
 
-	$self -> maximum_x($maximum_x);
+	$self -> maximum_x($maximum_x + $self -> final_x_step);
 
 } # End of find_maximum_x.
 
@@ -429,6 +429,7 @@ sub find_maximum_y
 	my($maximum_y)	= 0;
 
 	my($attributes);
+	my($bounds);
 
 	$self -> root -> walk_down
 	({
@@ -437,7 +438,8 @@ sub find_maximum_y
 		{
 			my($node)	= @_;
 			$attributes	= $node -> attributes;
-			$maximum_y	= $$attributes{y} if ($$attributes{y} > $maximum_y);
+			$bounds		= $$attributes{bounds};
+			$maximum_y	= $$bounds[3] if ($$bounds[3] > $maximum_y);
 
 			return 1; # Keep walking.
 		},
@@ -577,11 +579,11 @@ sub place_text
 sub plot_image
 {
 	my($self)			= @_;
-	my($bar_color)		= $self -> bar_color;
-	my($bar_width)		= $self -> bar_width - 1;
+	my($branch_color)	= $self -> branch_color;
+	my($branch_width)	= $self -> branch_width - 1;
 	my($final_x_step)	= $self -> final_x_step;
-	my($maximum_x)		= $self -> maximum_x + 50;
-	my($maximum_y)		= $self -> maximum_y + 50;
+	my($maximum_x)		= $self -> maximum_x + $self -> left_margin;
+	my($maximum_y)		= $self -> maximum_y + $self -> top_margin;
 	my($image)			= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
 	my($fuschia)		= Imager::Color -> new(0xff, 0, 0xff);
 	my($frame_color)	= Imager::Color -> new($self -> frame_color);
@@ -589,7 +591,7 @@ sub plot_image
 	my($x_step)			= $self -> x_step;
 
 	$image -> box(color => $white, filled => 1);
-	$image -> box(color => $frame_color) if ($self -> print_frame);
+	$image -> box(color => $frame_color) if ($self -> draw_frame);
 
 	my($attributes);
 	my($bounds);
@@ -634,10 +636,10 @@ sub plot_image
 					[
 						$$middle_attributes{x},
 						$$middle_attributes{y},
-						$$middle_attributes{x} + $bar_width,
+						$$middle_attributes{x} + $branch_width,
 						$$daughter_attributes{y},
 					],
-					color	=> $bar_color,
+					color	=> $branch_color,
 					filled	=> 1,
 				);
 
@@ -657,9 +659,9 @@ sub plot_image
 							$$middle_attributes{x},
 							$$daughter_attributes{y},
 							$$daughter_attributes{x} + $x_step + $final_offset,
-							$$daughter_attributes{y} + $bar_width,
+							$$daughter_attributes{y} + $branch_width,
 						],
-						color	=> $bar_color,
+						color	=> $branch_color,
 						filled	=> 1,
 					);
 
@@ -706,9 +708,9 @@ sub plot_image
 			$$daughter_attributes{x},
 			$$daughter_attributes{y},
 			$self -> left_margin,
-			$$attributes{y} + $bar_width,
+			$$attributes{y} + $branch_width,
 		],
-		color	=> $bar_color,
+		color	=> $branch_color,
 		filled	=> 1,
 	);
 
@@ -821,10 +823,10 @@ sub run
 	$self -> compute_co_ords;
 	$self -> find_minimum_y;
 	$self -> move_away_from_frame if ($self -> minimum_y <= $self -> top_margin);
-	$self -> find_maximum_y;
 	$self -> place_text;
 	$self -> check_for_overlap;
 	$self -> find_maximum_x;
+	$self -> find_maximum_y;
 	$self -> plot_image;
 
 	$self -> log(join('', map("$_\n", @{$self -> root -> tree2string}) ) ) if ($self -> print_tree);
@@ -842,8 +844,6 @@ sub run
 =pod
 
 	Sample 1:
-
-	See L<https://en.wikipedia.org/wiki/Cladogram>
 
 			+---- Beetles
 			|
@@ -871,8 +871,6 @@ sub run
 	2		below	Flies
 
 	Sample 2:
-
-	See L<http://phenomena.nationalgeographic.com/2015/12/11/paleo-profile-the-smoke-hill-bird/>
 
 			+--- Archaeopterix lithographica
 			|
@@ -952,5 +950,358 @@ sub run
 	12		above	Parahesperornis alexi
 	12		below	Hesperornis regalis
 
+=head1 NAME
+
+C<Tree::Cladogram> - Render a tree as a cladogram
+
+=head1 Synopsis
+
+	perl -Ilib scripts/plot.pl \
+		-draw_frame 1 \
+		-font_file /usr/share/fonts/truetype/ttf-bitstream-vera/VeraSe.ttf \
+		-font_size 16 \
+		-frame_color \#0000ff \
+		-input_file data/nationalgeographic.01.clad \
+		-output_file data/nationalgeographic.01.png \
+		-verbose 1
+
+=head1 Description
+
+L<Tree::Cladogram> provides a mechanism to turn a tree into a cladogram image.
+The image of generated using L<Imager>. The input is read from a text file.
+
+For information about cladograms, see L<https://en.wikipedia.org/wiki/Cladogram>.
+
+For another sample of a cladogram, see
+L<http://phenomena.nationalgeographic.com/2015/12/11/paleo-profile-the-smoke-hill-bird/>.
+
+Sample input is shipped as data/*.clad.
+
+Sample output is shipped as data/*.png:
+
+L<http://savage.net.au/misc/wikipedia.01.png>
+
+L<http://savage.net.au/misc/nationalgeographic.01.png>
+
+=head1 Distributions
+
+This module is available as a Unix-style distro (*.tgz).
+
+See L<http://savage.net.au/Perl-modules/html/installing-a-module.html>
+for help on unpacking and installing distros.
+
+=head1 Installation
+
+Install L<Tree::Cladogram> as you would for any C<Perl> module:
+
+Run:
+
+	cpanm Tree::Cladogram
+
+or run:
+
+	sudo cpan Tree::Cladogram
+
+or unpack the distro, and then:
+
+	perl Makefile.PL
+	make (or dmake or nmake)
+	make test
+	make install
+
+=head1 Constructor and Initialization
+
+C<new()> is called as C<< my($cladtronic) = Tree::Cladogram -> new(k1 => v1, k2 => v2, ...) >>.
+
+It returns a new object of type C<Tree::Cladogram>.
+
+Key-value pairs accepted in the parameter list (see corresponding methods for details
+[e.g. L</branch_color([$string])>]):
+
+=over 4
+
+=item o branch_color => $string
+
+Specify the color of the branches in the tree.
+
+Default: '#7e7e7e'.
+
+=item o branch_width => $integer
+
+Specify the thickness of the branches.
+
+Default: 3 (px).
+
+=item o draw_frame => $Boolean
+
+Specify that you want a frame around the image.
+
+Default: 0 (no frame).
+
+=item o final_x_step => $integer
+
+Specify the length of the final branch leading to the names of the leaves.
+
+Default: 30 (px).
+
+=item o font_color => $string
+
+Specify the color of the name of each leaf.
+
+Default: '#0000ff'.
+
+=item o font_file => $string
+
+Specify the name of the font file to use for the names of the leaves.
+
+Default: '/usr/local/share/fonts/truetype/gothic.ttf'.
+
+=item o font_size => $integer
+
+Specify the size of the text used for the name of each leaf.
+
+Default: 16.
+
+=item o frame_color => $string
+
+Specify the color of the frame, if any.
+
+See also C<draw_frame>.
+
+Default: '#0000ff'.
+
+=item o input_file => $string
+
+Specify the name of the *.clad file to read. Of course, the suffix does not have to be 'clad'.
+
+The format of this file is specified in the L<FAQ>.
+
+=item o left_margin => $integer
+
+Specify the distance from the left of the image to the left-most point at which something is drawn.
+
+Default: 15 (px).
+
+=item o output_file => $string
+
+Specify the name of the image file to write.
+
+Image formats supported are anything supported by L<Imager>. See the L<FAQ> for more.
+
+=item o print_tree => $Boolean
+
+Specify that you want to print the tree constructed by the code.
+
+This option is really for my benefit.
+
+Note: Nothing is printed unless C<verbose> is set to 1.
+
+Default: 0 (no tree).
+
+=item o top_margin => $integer
+
+Specify the distance from the top of the image to the top-most point at which something is drawn.
+
+Default: 15 (px).
+
+=item o verbose => $Boolean
+
+Specify whether or not to print anything.
+
+The only things which - currently - are printed are the name of the output file, if the code gets
+that far, and the tree. And for the tree, you must also set the C<print_tree> option.
+
+Default: 0 (print nothing).
+
+=item o x_step => $integer
+
+The horizontal length of branches.
+
+See also C<final_x_step> and C<y_step>.
+
+Default: 50 (px).
+
+=item o y_step => $integer
+
+The vertical length of the branches.
+
+Note: Some vertical branches will be shortened if the code detects overlapping when leaf names are
+drawn.
+
+See also C<x_step>.
+
+Default: 40 (px).
+
+=back
+
+=head1 Methods
+
+=head2 branch_color(([$string])
+
+Get or set the color used to fraw branches.
+
+C<branch_color> is a parameter to L</new()>.
+
+=head2 branch_width(([$integer])
+
+Get or set the width of branches.
+
+C<branch_width> is a parameter to L</new()>.
+
+=head2 draw_frame(([$Boolean])
+
+Get or set the option to draw a frame on the image.
+
+C<draw_frame> is a parameter to L</new()>.
+
+=head2 final_x_step(([$integer])
+
+Get or set the horizontal length of the branch leading to leaf names.
+
+C<final_x_step> is a parameter to L</new()>.
+
+=head2 font_color(([$string])
+
+Get or set the color of the text used to draw leaf names.
+
+C<font_color> is a parameter to L</new()>.
+
+=head2 font_file(([$string])
+
+Get or set the name of the font file.
+
+C<font_file> is a parameter to L</new()>.
+
+=head2 font_size(([$integer])
+
+Get or set the size of the font used to draw leaf names.
+
+C<font_size> is a parameter to L</new()>.
+
+=head2 frame_color(([$string])
+
+Get or set the color of the frame.
+
+C<frame_color> is a parameter to L</new()>.
+
+=head2 input_file(([$string])
+
+Get or set the name of the input file.
+
+C<input_file> is a parameter to L</new()>.
+
+=head2 left_margin(([$integer])
+
+Get or set the distance from the left edge at which drawing starts.
+
+This also sets the right margin.
+
+C<left_margin> is a parameter to L</new()>.
+
+=head2 maximum_x()
+
+Get the right-most point at which something was drawn.
+
+This value is determined by examining the bounding boxes of all leaf names.
+
+=head2 maximum_y()
+
+Get the bottom-most point at which something was drawn.
+
+=head2 new()
+
+See L</Constructor and Initialization> for details on the parameters accepted by L</new()>.
+
+=head2 output_file(([$string])
+
+Get or set the name of the output file.
+
+The file suffix determines what type of file is written.
+
+For more on supported image types, see the L<FAQ>.
+
+C<output_file> is a parameter to L</new()>.
+
+=head2 print_tree(([$Boolean])
+
+Get or set the option to print the tree constructed by the code. This is basically a debugging
+option.
+
+Note: You must also set C<verbose> before anything is printed.
+
+C<print_tree> is a parameter to L</new()>.
+
+=head2 top_margin(([$integer])
+
+Get or set the distance from the top edge at which drawing starts.
+
+This also sets the bottom margin.
+
+C<top_margin> is a parameter to L</new()>.
+
+=head2 verbose(([$Boolean])
+
+Get or set the option to print things.
+
+Currently, the only things printed are the name of the output file, after that file has been printed.
+and the internal tree. See also <print_tree>.
+
+C<verbose> is a parameter to L</new()>.
+
+=head2 x_step(([$integer])
+
+Get or set the length of horizontal branches.
+
+See also C<final_x_step>.
+
+C<x_step> is a parameter to L</new()>.
+
+=head2 y_step(([$integer])
+
+Get or set the length of vertical branches.
+
+Note: Some vertical branches will be shortened if the code detects overlapping when leaf names are
+drawn.
+
+C<y_step> is a parameter to L</new()>.
+
+=head1 FAQ
+
+=head2 What image formats are supported?
+
+My default install of L<Imager> lists:
+
+	bmp
+	ft2
+	ifs
+	png
+	pnm
+	raw
+
+=back
+
+=head2 What font formats are supported?
+
+This text is copied from the docs for L<Imager::Font>:
+
+	This module handles creating Font objects used by Imager. The module also handles querying
+	fonts for sizes and such. If both T1lib and FreeType were available at the time of compilation
+	then Imager should be able to work with both TrueType fonts and t1 Postscript fonts. To check
+	if Imager is t1 or TrueType capable you can use something like this:
+
+	use Imager;
+
+	print "Has truetype\n"      if $Imager::formats{tt};
+	print "Has t1 postscript\n" if $Imager::formats{t1};
+	print "Has Win32 fonts\n"   if $Imager::formats{w32};
+	print "Has Freetype2\n"     if $Imager::formats{ft2};
+
+My default install of L<Imager> lists:
+
+	Has Freetype2
+
+If you're using L<Debian|http://debian.org>, run C<fc-list> for a list of installed fonts.
+
+More information on Debian's support for fonts can be found L<here|https://wiki.debian.org/Fonts>.
 
 =cut

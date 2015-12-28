@@ -1,7 +1,7 @@
 #!/bin/bash
 
-NAME=wikipedia
 NAME=nationalgeographic
+NAME=wikipedia
 
 export NAME
 
@@ -17,13 +17,14 @@ export FRAME
 
 #echo $NAME.01.clad
 
+#	-font_file /usr/share/fonts/truetype/ttf-bitstream-vera/VeraSe.ttf \
+
 perl -Ilib scripts/plot.pl \
-	-font_file /usr/share/fonts/truetype/ttf-bitstream-vera/VeraSe.ttf \
+	-draw_frame $FRAME \
 	-font_size 16 \
 	-frame_color \#0000ff \
-	-i data/$NAME.01.clad \
-	-o data/$NAME.01.png \
-	-print_frame $FRAME \
-	-v 1
+	-input_file data/$NAME.01.clad \
+	-output_file data/$NAME.01.png \
+	-verbose 1
 
 cp data/$NAME.01.png $DR
