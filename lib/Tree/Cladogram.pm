@@ -1278,8 +1278,6 @@ My default install of L<Imager> lists:
 	pnm
 	raw
 
-=back
-
 =head2 What font formats are supported?
 
 This text is copied from the docs for L<Imager::Font>:
@@ -1303,5 +1301,9 @@ My default install of L<Imager> lists:
 If you're using L<Debian|http://debian.org>, run C<fc-list> for a list of installed fonts.
 
 More information on Debian's support for fonts can be found L<here|https://wiki.debian.org/Fonts>.
+
+=head1 TODO
+
+Split code to support L<Imager> and L<Image::Magick>.
 
 =cut
