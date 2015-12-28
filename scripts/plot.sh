@@ -82,7 +82,7 @@ FONT_FILE=/usr/share/fonts/truetype/dejavu/DejaVuSerif-Italic.ttf
 
 # Try.
 
-FONT_FILE=/usr/share/fonts/truetype/ttf-bitstream-vera/VeraSe.ttf
+FONT_FILE=/usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf
 
 export FONT_FILE
 

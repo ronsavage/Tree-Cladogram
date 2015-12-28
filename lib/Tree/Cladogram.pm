@@ -394,6 +394,188 @@ sub compute_co_ords
 
 # ------------------------------------------------
 
+sub draw_horizontal_branch
+{
+	my($self, $image, $middle_attributes, $daughter_attributes, $final_offset) = @_;
+	my($branch_color)	= $self -> branch_color;
+	my($branch_width)	= $self -> branch_width - 1;
+	my($x_step)			= $self -> x_step;
+
+	$image -> box
+	(
+		box =>
+		[
+			$$middle_attributes{x},
+			$$daughter_attributes{y},
+			$$daughter_attributes{x} + $x_step + $final_offset,
+			$$daughter_attributes{y} + $branch_width,
+		],
+		color	=> $branch_color,
+		filled	=> 1,
+	);
+
+} # End of draw_horizontal_branch.
+
+# ------------------------------------------------
+
+sub draw_image
+{
+	my($self)			= @_;
+	my($final_x_step)	= $self -> final_x_step;
+	my($maximum_x)		= $self -> maximum_x + $self -> left_margin;
+	my($maximum_y)		= $self -> maximum_y + $self -> top_margin;
+	my($image)			= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
+	my($frame_color)	= Imager::Color -> new($self -> frame_color);
+	my($white)			= Imager::Color -> new(255, 255, 255);
+	my($x_step)			= $self -> x_step;
+
+	$image -> box(color => $white, filled => 1);
+	$image -> box(color => $frame_color) if ($self -> draw_frame);
+
+	my($attributes);
+	my(@daughters, @daughter_attributes, $daughter_attributes);
+	my(@final_daughters, $final_offset);
+	my($index);
+	my($middle_attributes);
+	my($name);
+	my($place, %place);
+
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node)	= @_;
+			$attributes	= $node -> attributes;
+			@daughters	= $node -> daughters;
+			%place		= ();
+
+			for (0 .. $#daughters)
+			{
+				$daughter_attributes[$_]	= $daughters[$_] -> attributes;
+				$place						= $daughter_attributes[$_]{place};
+				$place{$place}				= $_;
+				$middle_attributes			= $daughter_attributes[$_] if ($place eq 'middle');
+			}
+
+			# Connect above and below daughters to middle daughter.
+
+			for $place (keys %place)
+			{
+				$index					= $place{$place};
+				$name					= $daughters[$index] -> name;
+				$daughter_attributes	= $daughter_attributes[$index];
+
+				$self -> draw_vertical_branch($image, $middle_attributes, $daughter_attributes);
+
+				if ( ($node -> name ne $name) && ($name ne 'root') )
+				{
+					# Stretch the horizontal lines, but only for leaves.
+
+					@final_daughters	= $daughters[$index] -> daughters;
+					$final_offset		= $#final_daughters < 0 ? $final_x_step : 0;
+
+					$self -> draw_horizontal_branch($image, $middle_attributes, $daughter_attributes, $final_offset);
+					$self -> draw_leaf_name($image, $name, $daughter_attributes, $final_offset);
+
+				}
+			}
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+	# Draw a line off to the left of the middle daughter of the root.
+
+	$self -> draw_root_branch($image);
+
+	$image -> write(file => $self -> output_file);
+	$self -> log('Wrote ' . $self -> output_file);
+
+} # End of draw_image.
+
+# ------------------------------------------------
+
+sub draw_leaf_name
+{
+	my($self, $image, $name, $daughter_attributes, $final_offset) = @_;
+
+	if ( (length($name) > 0) && ($name !~ /^\d+$/) )
+	{
+		my($bounds) 	= $$daughter_attributes{bounds};
+		my($fuschia)	= Imager::Color -> new(0xff, 0, 0xff);
+
+		$image -> string
+		(
+			align	=> 0,
+			font	=> $self -> font,
+			string	=> $name,
+			x		=> $$bounds[0] + $final_offset,
+			y		=> $$bounds[1],
+		);
+
+#		$image -> box
+#		(
+#			box		=> $bounds,
+#			color	=> $fuschia,
+#			filled	=> 0,
+#		);
+	}
+
+} # End of draw_leaf_name.
+
+# ------------------------------------------------
+
+sub draw_root_branch
+{
+	my($self, $image)			= @_;
+	my($branch_color)			= $self -> branch_color;
+	my($branch_width)			= $self -> branch_width - 1;
+	my($attributes)				= $self -> root -> attributes;
+	my(@daughters)				= $self -> root -> daughters;
+	my($daughter_attributes)	= $daughters[0] -> attributes;
+
+	$image -> box
+	(
+		box =>
+		[
+			$$daughter_attributes{x},
+			$$daughter_attributes{y},
+			$self -> left_margin,
+			$$attributes{y} + $branch_width,
+		],
+		color	=> $branch_color,
+		filled	=> 1,
+	);
+
+} # End of draw_root_branch.
+
+# ------------------------------------------------
+
+sub draw_vertical_branch
+{
+	my($self, $image, $middle_attributes, $daughter_attributes) = @_;
+	my($branch_color)	= $self -> branch_color;
+	my($branch_width)	= $self -> branch_width - 1;
+
+	$image -> box
+	(
+		box =>
+		[
+			$$middle_attributes{x},
+			$$middle_attributes{y},
+			$$middle_attributes{x} + $branch_width,
+			$$daughter_attributes{y},
+		],
+		color	=> $branch_color,
+		filled	=> 1,
+	);
+
+} # End of draw_vertical_branch.
+
+# ------------------------------------------------
+
 sub find_maximum_x
 {
 	my($self)		= @_;
@@ -576,151 +758,6 @@ sub place_text
 
 # ------------------------------------------------
 
-sub plot_image
-{
-	my($self)			= @_;
-	my($branch_color)	= $self -> branch_color;
-	my($branch_width)	= $self -> branch_width - 1;
-	my($final_x_step)	= $self -> final_x_step;
-	my($maximum_x)		= $self -> maximum_x + $self -> left_margin;
-	my($maximum_y)		= $self -> maximum_y + $self -> top_margin;
-	my($image)			= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
-	my($fuschia)		= Imager::Color -> new(0xff, 0, 0xff);
-	my($frame_color)	= Imager::Color -> new($self -> frame_color);
-	my($white)			= Imager::Color -> new(255, 255, 255);
-	my($x_step)			= $self -> x_step;
-
-	$image -> box(color => $white, filled => 1);
-	$image -> box(color => $frame_color) if ($self -> draw_frame);
-
-	my($attributes);
-	my($bounds);
-	my(@daughters, @daughter_attributes, $daughter_attributes);
-	my(@final_daughters, $final_offset);
-	my($index);
-	my($middle_attributes);
-	my($name);
-	my($parent_attributes, $place, %place);
-
-	$self -> root -> walk_down
-	({
-		callback =>
-		sub
-		{
-			my($node)	= @_;
-			$attributes	= $node -> attributes;
-			@daughters	= $node -> daughters;
-			%place		= ();
-
-			for (0 .. $#daughters)
-			{
-				$daughter_attributes[$_]	= $daughter_attributes = $daughters[$_] -> attributes;
-				$place						= $$daughter_attributes{place};
-				$place{$place}				= $_;
-				$middle_attributes			= $daughter_attributes if ($place eq 'middle');
-			}
-
-			# Connect above and below daughters to middle daughter.
-
-			for $place (keys %place)
-			{
-				$index					= $place{$place};
-				$name					= $daughters[$index] -> name;
-				$daughter_attributes	= $daughter_attributes[$index];
-
-				# 1: Draw a line (a filled box) up or down from the middle.
-
-				$image -> box
-				(
-					box =>
-					[
-						$$middle_attributes{x},
-						$$middle_attributes{y},
-						$$middle_attributes{x} + $branch_width,
-						$$daughter_attributes{y},
-					],
-					color	=> $branch_color,
-					filled	=> 1,
-				);
-
-				if ( ($node -> name ne $name) && ($name ne 'root') )
-				{
-					# Stretch the horizontal lines, but only for leaves.
-
-					@final_daughters	= $daughters[$index] -> daughters;
-					$final_offset		= $#final_daughters < 0 ? $final_x_step : 0;
-
-					# 2: Draw a line from there off to the right.
-
-					$image -> box
-					(
-						box =>
-						[
-							$$middle_attributes{x},
-							$$daughter_attributes{y},
-							$$daughter_attributes{x} + $x_step + $final_offset,
-							$$daughter_attributes{y} + $branch_width,
-						],
-						color	=> $branch_color,
-						filled	=> 1,
-					);
-
-					# 3: Draw the text.
-
-					if ( (length($name) > 0) && ($name !~ /^\d+$/) )
-					{
-						$bounds	= $$daughter_attributes{bounds};
-
-						$image -> string
-						(
-							align	=> 0,
-							font	=> $self -> font,
-							string	=> $name,
-							x		=> $$bounds[0] + $final_offset,
-							y		=> $$bounds[1],
-						);
-
-#						$image -> box
-#						(
-#							box		=> $bounds,
-#							color	=> $fuschia,
-#							filled	=> 0,
-#						);
-					}
-				}
-			}
-
-			return 1; # Keep walking.
-		},
-		_depth	=> 0,
-	});
-
-	# Draw a line off to the left of the middle daughter of the root.
-
-	$attributes				= $self -> root -> attributes;
-	@daughters				= $self -> root -> daughters;
-	$daughter_attributes	= $daughters[0] -> attributes;
-
-	$image -> box
-	(
-		box =>
-		[
-			$$daughter_attributes{x},
-			$$daughter_attributes{y},
-			$self -> left_margin,
-			$$attributes{y} + $branch_width,
-		],
-		color	=> $branch_color,
-		filled	=> 1,
-	);
-
-	$image -> write(file => $self -> output_file);
-	$self -> log('Wrote ' . $self -> output_file);
-
-} # End of plot_image.
-
-# ------------------------------------------------
-
 sub read
 {
 	my($self)	= @_;
@@ -827,7 +864,7 @@ sub run
 	$self -> check_for_overlap;
 	$self -> find_maximum_x;
 	$self -> find_maximum_y;
-	$self -> plot_image;
+	$self -> draw_image;
 
 	$self -> log(join('', map("$_\n", @{$self -> root -> tree2string}) ) ) if ($self -> print_tree);
 
