@@ -109,7 +109,6 @@ for i in nationalgeographic wikipedia; do
 		-output_file data/$i.01.png \
 		-title "$TITLE" \
 		-title_font_file $TITLE_FONT_FILE \
-		-verbose 1
 
 	identify data/$i.01.png
 

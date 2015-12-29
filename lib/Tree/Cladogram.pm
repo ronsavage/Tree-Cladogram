@@ -35,6 +35,14 @@ has draw_frame =>
 	required => 0,
 );
 
+has debug =>		# Internal.
+(
+	default  => sub{return 0},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
 has final_x_step =>
 (
 	default  => sub{return 30},
@@ -48,14 +56,6 @@ has frame_color =>
 	default  => sub{return '#0000ff'},
 	is       => 'rw',
 	isa      => Str,
-	required => 0,
-);
-
-has image =>		# Internal.
-(
-	default  => sub{return ''},
-	is       => 'rw',
-	isa      => Any,
 	required => 0,
 );
 
@@ -219,14 +219,6 @@ has uid =>		# Internal.
 	required => 0,
 );
 
-has verbose =>
-(
-	default  => sub{return 0},
-	is       => 'rw',
-	isa      => Int,
-	required => 0,
-);
-
 has x_step =>
 (
 	default  => sub{return 50},
@@ -287,7 +279,6 @@ sub BUILD
 		$self -> title_width($bounds[2]);
 	}
 
-	$self -> image(Imager -> new);
 	$self -> root($self -> new_node('0', {place => 'middle'}) );
 
 } # End of BUILD.
@@ -303,7 +294,7 @@ sub check_point_within_rectangle
 	my($x_max)	= $$bounds_1[2];
 	my($y_max)	= $$bounds_1[3];
 
-	if (	($x >= $x_min) && ($x <= $x_max)
+	if ( ($x >= $x_min) && ($x <= $x_max)
 		&&	($y >= $y_min) && ($y <= $y_max) )
 	{
 		$result = 1;
@@ -324,7 +315,7 @@ sub check_rectangle_within_rectangle
 	my($x_max_2)	= $$bounds_2[2];
 	my($y_max_2)	= $$bounds_2[3];
 
-	if (	$self -> check_point_within_rectangle($bounds_1, $x_min_2, $y_min_2)
+	if ($self -> check_point_within_rectangle($bounds_1, $x_min_2, $y_min_2)
 		||	$self -> check_point_within_rectangle($bounds_1, $x_max_2, $y_min_2)
 		||	$self -> check_point_within_rectangle($bounds_1, $x_min_2, $y_max_2)
 		||	$self -> check_point_within_rectangle($bounds_1, $x_max_2, $y_max_2) )
@@ -592,12 +583,15 @@ sub draw_leaf_name
 			y		=> $$bounds[1],
 		);
 
-#		$image -> box
-#		(
-#			box		=> $bounds,
-#			color	=> $fuschia,
-#			filled	=> 0,
-#		);
+		if ($self -> debug)
+		{
+			$image -> box
+			(
+				box		=> $bounds,
+				color	=> $fuschia,
+				filled	=> 0,
+			);
+		}
 	}
 
 } # End of draw_leaf_name.
@@ -776,7 +770,7 @@ sub log
 {
 	my($self, $message) = @_;
 
-	print "$message\n" if ($self -> verbose);
+	print "$message\n";
 
 } # End of log.
 
@@ -821,8 +815,6 @@ sub new_node
 {
 	my($self, $name, $attributes)  = @_;
 	$$attributes{bounds}	= [];
-	$$attributes{shifted}	= 0;
-	$$attributes{scaffold}	= 0;
 	$$attributes{uid}		= $self -> uid($self -> uid + 1);
 
 	return Tree::DAG_Node -> new({name => $name, attributes => $attributes});
@@ -1030,7 +1022,6 @@ This is scripts/plot.pl:
 		'title=s',
 		'title_font_file=s',
 		'title_font_size=s',
-		'verbose=i',
 	) )
 	{
 		pod2usage(1) if ($option{'help'});
@@ -1042,6 +1033,8 @@ This is scripts/plot.pl:
 		pod2usage(2);
 	}
 
+As you can see, you create an object and then call L</run()>.
+
 And this is the heart of scripts/plot.sh:
 
 	perl -Ilib scripts/plot.pl \
@@ -1051,7 +1044,6 @@ And this is the heart of scripts/plot.sh:
 		-output_file data/$i.01.png \
 		-title "$TITLE" \
 		-title_font_file $TITLE_FONT_FILE \
-		-verbose 1
 
 =head1 Description
 
@@ -1186,9 +1178,13 @@ Specify that you want to print the tree constructed by the code.
 
 This option is really a debugging aid.
 
-Note: Nothing is printed unless C<verbose> is set to 1.
-
 Default: 0 (no tree).
+
+=item o title => $string
+
+Specify the title to draw at the bottom of the image.
+
+Default: '' (no title).
 
 =item o title_font_color => $string
 
@@ -1214,15 +1210,6 @@ Specify the distance from the top of the image to the top-most point at which so
 
 Default: 15 (px).
 
-=item o verbose => $Boolean
-
-Specify whether or not to print anything.
-
-The only things which - currently - are printed are the name of the output file, if the code gets
-that far, and the tree. And for the tree, you must also set the C<print_tree> option.
-
-Default: 0 (print nothing).
-
 =item o x_step => $integer
 
 The horizontal length of branches.
@@ -1246,61 +1233,61 @@ Default: 40 (px).
 
 =head1 Methods
 
-=head2 branch_color(([$string])
+=head2 branch_color([$string])
 
 Get or set the color used to fraw branches.
 
 C<branch_color> is a parameter to L</new()>.
 
-=head2 branch_width(([$integer])
+=head2 branch_width([$integer])
 
 Get or set the width of branches.
 
 C<branch_width> is a parameter to L</new()>.
 
-=head2 draw_frame(([$Boolean])
+=head2 draw_frame([$Boolean])
 
 Get or set the option to draw a frame on the image.
 
 C<draw_frame> is a parameter to L</new()>.
 
-=head2 final_x_step(([$integer])
+=head2 final_x_step([$integer])
 
 Get or set the horizontal length of the branch leading to leaf names.
 
 C<final_x_step> is a parameter to L</new()>.
 
-=head2 frame_color(([$string])
+=head2 frame_color([$string])
 
 Get or set the color of the frame.
 
 C<frame_color> is a parameter to L</new()>.
 
-=head2 input_file(([$string])
+=head2 input_file([$string])
 
 Get or set the name of the input file.
 
 C<input_file> is a parameter to L</new()>.
 
-=head2 leaf_font_color(([$string])
+=head2 leaf_font_color([$string])
 
 Get or set the font color of the text used to draw leaf names.
 
 C<leaf_font_color> is a parameter to L</new()>.
 
-=head2 leaf_font_file(([$string])
+=head2 leaf_font_file([$string])
 
-Get or set the name of the font file.
+Get or set the name of the font file used for leaf names.
 
 C<leaf_font_file> is a parameter to L</new()>.
 
-=head2 leaf_font_size(([$integer])
+=head2 leaf_font_size([$integer])
 
 Get or set the size of the font used to draw leaf names.
 
 C<leaf_font_size> is a parameter to L</new()>.
 
-=head2 left_margin(([$integer])
+=head2 left_margin([$integer])
 
 Get or set the distance from the left edge at which drawing starts.
 
@@ -1322,7 +1309,7 @@ Get the bottom-most point at which something was drawn.
 
 See L</Constructor and Initialization> for details on the parameters accepted by L</new()>.
 
-=head2 output_file(([$string])
+=head2 output_file([$string])
 
 Get or set the name of the output file.
 
@@ -1332,12 +1319,10 @@ For more on supported image types, see the L<FAQ>.
 
 C<output_file> is a parameter to L</new()>.
 
-=head2 print_tree(([$Boolean])
+=head2 print_tree([$Boolean])
 
 Get or set the option to print the tree constructed by the code. This is basically a debugging
 option.
-
-Note: You must also set C<verbose> before anything is printed.
 
 C<print_tree> is a parameter to L</new()>.
 
@@ -1345,7 +1330,31 @@ C<print_tree> is a parameter to L</new()>.
 
 After calling L</new()>, this is the only other method you would normally call.
 
-=head2 top_margin(([$integer])
+=head2 title([$string])
+
+Get or set the title to be drawn at the bottom of the image.
+
+C<title> is a parameter to L</new()>.
+
+=head2 title_font_color([$string])
+
+Get or set the font color of the text used to draw the title.
+
+C<title_font_color> is a parameter to L</new()>.
+
+=head2 title_font_file([$string])
+
+Get or set the name of the font file used for the title.
+
+C<title_font_file> is a parameter to L</new()>.
+
+=head2 title_font_size([$integer])
+
+Get or set the size of the font used to draw the title.
+
+C<title_font_size> is a parameter to L</new()>.
+
+=head2 top_margin([$integer])
 
 Get or set the distance from the top edge at which drawing starts.
 
@@ -1353,16 +1362,7 @@ This also sets the bottom margin.
 
 C<top_margin> is a parameter to L</new()>.
 
-=head2 verbose(([$Boolean])
-
-Get or set the option to print things.
-
-Currently, the only things printed are the name of the output file, after that file has been printed.
-and the internal tree. See also <print_tree>.
-
-C<verbose> is a parameter to L</new()>.
-
-=head2 x_step(([$integer])
+=head2 x_step([$integer])
 
 Get or set the length of horizontal branches.
 
@@ -1370,7 +1370,7 @@ See also C<final_x_step>.
 
 C<x_step> is a parameter to L</new()>.
 
-=head2 y_step(([$integer])
+=head2 y_step([$integer])
 
 Get or set the length of vertical branches.
 
@@ -1385,115 +1385,119 @@ C<y_step> is a parameter to L</new()>.
 
 Sample 1 - L<https://en.wikipedia.org/wiki/Cladogram>:
 
-			+---- Beetles
-			|
-			|
+	        +---- Beetles
+	        |
+	        |
 	Root ---+	+---- Wasps, bees, ants
-			|	|
-			|	|
-			1---+	+---- Butterflies, moths
-				|	|
-				|	|
-				2---+
-					|
-					|
-					+---- Flies
+	        |	|
+	        |	|
+	        1---+	+---- Butterflies, moths
+	            |	|
+	            |	|
+	            2---+
+	                |
+	                |
+	                +---- Flies
 
-For matching data file, see data/cladogram.01.clad:
+This is the data file (shipped as data/cladogram.01.clad). The format is defined below:
 
-	Parent	Place	Node
-	root	above	Beetles
-	root	below	1
-	1		above	Wasps, bees, ants
-	1		below	2
-	2		above	Butterflies, moths
-	2		below	Flies
+	Parent  Place  Node
+	root    above  Beetles
+	root    below  1
+	1       above  Wasps, bees, ants
+	1       below  2
+	2       above  Butterflies, moths
+	2       below  Flies
 
-Sample 2 - <http://phenomena.nationalgeographic.com/2015/12/11/paleo-profile-the-smoke-hill-bird/>:
+Output: L<http://savage.net.au/misc/wikipedia.01.png>.
 
-			+--- Archaeopterix lithographica
-			|
-			|
-			|
-	Root ---+	+--- Apsaravis ukhaana
-			|	|
-			|	|
-			|	|
-			1---+	+--- Gansus yumemensis
-				|	|
-				|	|
-				|	|
-				2---+	+--- Ichthyornis dispar
-					|	|
-					|	|		+--- Gallus gallus
-					|	|		|
-					3---+	5---+
-						|	|	|
-						|	|	+--- Anas clypeata
-						|	|
-						4---+
-							|	+--- Pasquiaornis
-							|	|
-							|	|
-							6---+	+--- Enaliornis
-								|	|
-								|	|
-								|	|
-								7---+	+--- Baptornis advenus
-									|	|
-									|	|		+--- Brodavis varnei
-									|	|		|
-									8---+	10--+
-										|	|	|
-										|	|	+--- Brodavis baileyi
-										|	|
-										9---+
-											|	+--- Fumicollis hoffmani
-											|	|
-											|	|
-											11--+	+--- Parahesperornis alexi
-												|	|
-												|	|
-												12--+
-													|
-													|
-													+--- Hesperornis regalis
+Sample 2 - L<http://phenomena.nationalgeographic.com/2015/12/11/paleo-profile-the-smoke-hill-bird/>:
 
-For matching data file, see data/nationalgeographic.01.clad:
+	        +--- Archaeopterix lithographica
+	        |
+	        |
+	        |
+	Root ---+   +--- Apsaravis ukhaana
+	        |   |
+	        |   |
+	        |   |
+	        1---+   +--- Gansus yumemensis
+	            |   |
+	            |   |
+	            |   |
+	            2---+   +--- Ichthyornis dispar
+	                |   |
+	                |   |       +--- Gallus gallus
+	                |   |       |
+	                3---+   5---+
+	                    |   |   |
+	                    |   |   +--- Anas clypeata
+	                    |   |
+	                    4---+
+	                        |   +--- Pasquiaornis
+	                        |   |
+	                        |   |
+	                        6---+   +--- Enaliornis
+	                            |   |
+	                            |   |
+	                            |   |
+	                            7---+   +--- Baptornis advenus
+	                                |   |
+	                                |   |       +--- Brodavis varnei
+	                                |   |       |
+	                                8---+   10--+
+	                                    |   |   |
+	                                    |   |   +--- Brodavis baileyi
+	                                    |   |
+	                                    9---+
+	                                        |   +--- Fumicollis hoffmani
+	                                        |   |
+	                                        |   |
+	                                        11--+   +--- Parahesperornis alexi
+	                                            |   |
+	                                            |   |
+	                                            12--+
+	                                                |
+	                                                |
+	                                                +--- Hesperornis regalis
 
-	Parent	Place	Node
-	root	above	Archaeopterix lithographica
-	root	below	1
-	1		above	Apsaravis ukhaana
-	1		below	2
-	2		above	Gansus yumemensis
-	2		below	3
-	3		above	Ichthyornis dispar
-	3		below	4
-	4		above	5
-	4		below	6
-	5		above	Gallus gallus
-	5		below	Anas clypeata
-	6		above	Pasquiaornis
-	6		below	7
-	7		above	Enaliornis
-	7		below	8
-	8		above	Baptornis advenus
-	8		below	9
-	9		above	10
-	9		below	11
-	10		above	Brodavis varnei
-	10		below	Brodavis baileyi
-	11		above	Fumicollis hoffmani
-	11		below	12
-	12		above	Parahesperornis alexi
-	12		below	Hesperornis regalis
+This is the data file (shipped as  data/nationalgeographic.01.clad). The format is defined below:
 
-Guidelines:
+	Parent  Place  Node
+	root    above  Archaeopterix lithographica
+	root    below  1
+	1       above  Apsaravis ukhaana
+	1       below  2
+	2       above  Gansus yumemensis
+	2       below  3
+	3       above  Ichthyornis dispar
+	3       below  4
+	4       above  5
+	4       below  6
+	5       above  Gallus gallus
+	5       below  Anas clypeata
+	6       above  Pasquiaornis
+	6       below  7
+	7       above  Enaliornis
+	7       below  8
+	8       above  Baptornis advenus
+	8       below  9
+	9       above  10
+	9       below  11
+	10      above  Brodavis varnei
+	10      below  Brodavis baileyi
+	11      above  Fumicollis hoffmani
+	11      below  12
+	12      above  Parahesperornis alexi
+	12      below  Hesperornis regalis
+
+Output: L<http://savage.net.au/misc/nationalgeographic.01.png>.
+
+File format:
 
 =over 4
 
-=item o Add lines are tab separated
+=item o All lines are tab separated
 
 =item o There are 3 columns
 
@@ -1501,11 +1505,11 @@ Guidelines:
 
 =item o The first line must match /Parent\tPlace\tNode/i
 
-=item o The word 'root' is case-insensitive
-
 =item o Column 1 is the name of the node
 
 Notice how every node has 2 mandatory lines.
+
+=item o The word 'root' is (also) case-insensitive
 
 =item o Column 2 specifies where the daughter appears in relation to the node
 
@@ -1513,17 +1517,11 @@ Notice how every node has 2 mandatory lines.
 
 =back
 
-=item o Fabricate skeleton nodes to hold together the nodes you are interested in.
+=item o Fabricate skeleton nodes to hold together the nodes you are interested in
 
-=item o Use digits for the fake node names, since the code hides the name of nodes in these cases:
+=item o Use digits for the fake node names
 
-=over 4
-
-=item o The name matches /^\d+$/
-
-=item o The name matches 'root'
-
-=back
+The code hides the name of nodes which match /^(\d+|root)$/.
 
 =back
 

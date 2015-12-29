@@ -18,18 +18,26 @@ my(%option);
 if ($option_parser -> getoptions
 (
 	\%option,
+	'branch_color=s',
+	'branch_width=i',
 	'draw_frame=i',
+	'final_x_step=i',
 	'frame_color=s',
 	'help',
 	'input_file=s',
+	'leaf_font_color=s',
 	'leaf_font_file=s',
 	'leaf_font_size=i',
+	'left_margin=i',
 	'output_file=s',
 	'print_tree=i',
 	'title=s',
+	'title_font_color=s',
 	'title_font_file=s',
-	'title_font_size=s',
-	'verbose=i',
+	'title_font_size=i',
+	'top_margin=i',
+	'x_step=i',
+	'y_step=i',
 ) )
 {
 	pod2usage(1) if ($option{'help'});
@@ -58,20 +66,26 @@ plt.pl plots a cladogram.
 plot.pl [options]
 
 	Options:
-	-draw_frame $Boolean
-	-frame_color $string
+	-branch_color  string
+	-branch_width  integer
+	-draw_frame  integer
+	-final_x_step  integer
+	-frame_color  string
 	-help
-	-input_file $in_file
-	-leaf_font_color $string
-	-leaf_font_file $path2font
-	-leaf_font_size $integer
-	-output_file $out_file
-	-print_tree $Boolean
-	-title $string
-	-title_font_color $string
-	-title_font_file $path2font
-	-title_font_size $integer
-	-verbose $Boolean
+	-input_file  string
+	-leaf_font_color  string
+	-leaf_font_file  string
+	-leaf_font_size  integer
+	-left_margin  integer
+	-output_file  string
+	-print_tree  integer
+	-title  string
+	-title_font_color  string
+	-title_font_file  string
+	-title_font_size  integer
+	-top_margin  integer
+	-x_step  iteger
+	-y_step  iteger
 
 All switches can be reduced to a single letter.
 
@@ -81,11 +95,29 @@ Exit value: 0.
 
 =over 4
 
+=item o -branch_color $string
+
+Specify the color of the branches in the tree.
+
+Default: '#7e7e7e' (gray).
+
+Specify the thickness of the branches.
+
+Default: 3 (px).
+
+=item o -branch_width $integer
+
 =item o -draw_frame $Boolean
 
 If set, include the frame in the output image.
 
 Default: 0 (no frame).
+
+=item o -final_x_step $integer
+
+Specify the length of the final branch leading to the names of the leaves.
+
+Default: 30 (px).
 
 =item o -frame_color $string
 
@@ -113,13 +145,13 @@ Default: ''.
 
 =item o -leaf_font_color $string
 
-The color of the font used for the names of the leaves.
+The color of the font used for leaf names.
 
 Default: '#0000ff' (blue).
 
 =item o -leaf_font_file $path2font
 
-The path to a font file to be used to the names of leaves.
+The path to a font file to be used for leaf names.
 
 Default: /usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf.
 
@@ -127,7 +159,13 @@ This file ships as data/VeraBd.ttf.
 
 =item o -leaf_font_size $integer
 
-The pointsize of the font.
+The pointsize of the font used for leaf names.
+
+=item o -left_margin $integer
+
+Specify the distance from the left of the image to the left-most point at which something is drawn.
+
+Default: 15 (px).
 
 =item o -output_file $out_file
 
@@ -141,7 +179,7 @@ Default: ''.
 
 =item o -print_tree $Boolean
 
-If set, /and/ if verbose it set, print the tree constructed by reading the input file.
+If set print the tree constructed by reading the input file.
 
 Default: 0 (no output).
 
@@ -167,11 +205,34 @@ Default: /usr/share/fonts/truetype/freefont/FreeSansBold.ttf.
 
 This file ships as data/FreeSansBold.ttf.
 
-=item o -verbose $Boolean
+=item o -title_font_size $integer
 
-Set to 1 to display progress.
+The pointsize of the font used for the title.
 
-Default: 0 (no output).
+=item o -top_margin $integer
+
+Specify the distance from the top of the image to the top-most point at which something is drawn.
+
+Default: 15 (px).
+
+=item o -x_step $integer
+
+The horizontal length of branches.
+
+See also C<final_x_step> and C<y_step>.
+
+Default: 50 (px).
+
+=item o -y_step $integer
+
+The vertical length of the branches.
+
+Note: Some vertical branches will be shortened if the code detects overlapping when leaf names are
+drawn.
+
+See also C<x_step>.
+
+Default: 40 (px).
 
 =back
 
