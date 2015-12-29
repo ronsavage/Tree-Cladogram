@@ -86,8 +86,6 @@ LEAF_FONT_FILE=/usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf
 
 TITLE_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeSansBold.ttf
 
-export LEAF_FONT_FILE TITLE_FONT_FILE
-
 echo Font: $LEAF_FONT_FILE
 
 for i in nationalgeographic wikipedia; do
@@ -102,16 +100,12 @@ for i in nationalgeographic wikipedia; do
 		TITLE='The diversity of hesperornithiforms. From Bell and Chiappe, 2015'
 	fi
 
-	export FRAME
-
 	#echo $NAME.01.clad
 
 	perl -Ilib scripts/plot.pl \
 		-draw_frame $FRAME \
-		-frame_color \#0000ff \
 		-input_file data/$i.01.clad \
 		-leaf_font_file $LEAF_FONT_FILE \
-		-leaf_font_size 16 \
 		-output_file data/$i.01.png \
 		-title "$TITLE" \
 		-title_font_file $TITLE_FONT_FILE \

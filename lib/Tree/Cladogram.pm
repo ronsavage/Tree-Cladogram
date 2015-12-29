@@ -562,8 +562,13 @@ sub draw_image
 	$self -> draw_root_branch($image);
 	$self -> draw_title($image, $maximum_x, $maximum_y);
 
-	$image -> write(file => $self -> output_file);
-	$self -> log('Wrote ' . $self -> output_file);
+	my($output_file) = $self -> output_file;
+
+	if (length($output_file) )
+	{
+		$image -> write(file => $output_file);
+		$self -> log('Wrote ' . $output_file);
+	}
 
 } # End of draw_image.
 
@@ -986,126 +991,66 @@ sub run
 
 =pod
 
-	Sample 1:
-
-			+---- Beetles
-			|
-			|
-	Root ---+	+---- Wasps, bees, ants
-			|	|
-			|	|
-			1---+	+---- Butterflies, moths
-				|	|
-				|	|
-				2---+
-					|
-					|
-					+---- Flies
-
-
-	For matching data file, see data/cladogram.01.clad:
-
-	Parent	Place	Node
-	root	above	Beetles
-	root	below	1
-	1		above	Wasps, bees, ants
-	1		below	2
-	2		above	Butterflies, moths
-	2		below	Flies
-
-	Sample 2:
-
-			+--- Archaeopterix lithographica
-			|
-			|
-			|
-	Root ---+	+--- Apsaravis ukhaana
-			|	|
-			|	|
-			|	|
-			1---+	+--- Gansus yumemensis
-				|	|
-				|	|
-				|	|
-				2---+	+--- Ichthyornis dispar
-					|	|
-					|	|		+--- Gallus gallus
-					|	|		|
-					3---+	5---+
-						|	|	|
-						|	|	+--- Anas clypeata
-						|	|
-						4---+
-							|	+--- Pasquiaornis
-							|	|
-							|	|
-							6---+	+--- Enaliornis
-								|	|
-								|	|
-								|	|
-								7---+	+--- Baptornis advenus
-									|	|
-									|	|		+--- Brodavis varnei
-									|	|		|
-									8---+	10--+
-										|	|	|
-										|	|	+--- Brodavis baileyi
-										|	|
-										9---+
-											|	+--- Fumicollis hoffmani
-											|	|
-											|	|
-											11--+	+--- Parahesperornis alexi
-												|	|
-												|	|
-												12--+
-													|
-													|
-													+--- Hesperornis regalis
-
-	For matching data file, see data/nationalgeographic.01.clad:
-
-	Parent	Place	Node
-	root	above	Archaeopterix lithographica
-	root	below	1
-	1		above	Apsaravis ukhaana
-	1		below	2
-	2		above	Gansus yumemensis
-	2		below	3
-	3		above	Ichthyornis dispar
-	3		below	4
-	4		above	5
-	4		below	6
-	5		above	Gallus gallus
-	5		below	Anas clypeata
-	6		above	Pasquiaornis
-	6		below	7
-	7		above	Enaliornis
-	7		below	8
-	8		above	Baptornis advenus
-	8		below	9
-	9		above	10
-	9		below	11
-	10		above	Brodavis varnei
-	10		below	Brodavis baileyi
-	11		above	Fumicollis hoffmani
-	11		below	12
-	12		above	Parahesperornis alexi
-	12		below	Hesperornis regalis
-
 =head1 NAME
 
 C<Tree::Cladogram> - Render a tree as a cladogram
 
 =head1 Synopsis
 
+This is scripts/plot.pl:
+
+	#!/usr/bin/env perl
+
+	use strict;
+	use warnings;
+
+	use Getopt::Long;
+
+	use Pod::Usage;
+
+	use Tree::Cladogram;
+
+	# ----------------------------------------------
+
+	my($option_parser) = Getopt::Long::Parser -> new;
+
+	my(%option);
+
+	if ($option_parser -> getoptions
+	(
+		\%option,
+		'draw_frame=i',
+		'frame_color=s',
+		'help',
+		'input_file=s',
+		'leaf_font_file=s',
+		'leaf_font_size=i',
+		'output_file=s',
+		'print_tree=i',
+		'title=s',
+		'title_font_file=s',
+		'title_font_size=s',
+		'verbose=i',
+	) )
+	{
+		pod2usage(1) if ($option{'help'});
+
+		exit Tree::Cladogram -> new(%option) -> run;
+	}
+	else
+	{
+		pod2usage(2);
+	}
+
+And this is the heart of scripts/plot.sh:
+
 	perl -Ilib scripts/plot.pl \
-		-draw_frame 1 \
-		-frame_color \#0000ff \
-		-input_file data/nationalgeographic.01.clad \
-		-leaf_font_size 16 \
-		-leaf_font_file /usr/share/fonts/truetype/ttf-bitstream-vera/VeraSe.ttf \
-		-output_file data/nationalgeographic.01.png \
+		-draw_frame $FRAME \
+		-input_file data/$i.01.clad \
+		-leaf_font_file $LEAF_FONT_FILE \
+		-output_file data/$i.01.png \
+		-title "$TITLE" \
+		-title_font_file $TITLE_FONT_FILE \
 		-verbose 1
 
 =head1 Description
@@ -1167,7 +1112,7 @@ Key-value pairs accepted in the parameter list (see corresponding methods for de
 
 Specify the color of the branches in the tree.
 
-Default: '#7e7e7e'.
+Default: '#7e7e7e' (gray).
 
 =item o branch_width => $integer
 
@@ -1187,11 +1132,27 @@ Specify the length of the final branch leading to the names of the leaves.
 
 Default: 30 (px).
 
+=item o frame_color => $string
+
+Specify the color of the frame, if any.
+
+See also C<draw_frame>.
+
+Default: '#0000ff' (blue).
+
+=item o input_file => $string
+
+Specify the name of the *.clad file to read. Of course, the suffix does not have to be 'clad'.
+
+The format of this file is specified in the L<FAQ>.
+
+Default: ''.
+
 =item o leaf_font_color => $string
 
 Specify the font color of the name of each leaf.
 
-Default: '#0000ff'.
+Default: '#0000ff' (blue).
 
 =item o leaf_font_file => $string
 
@@ -1203,21 +1164,7 @@ Default: '/usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf'.
 
 Specify the size of the text used for the name of each leaf.
 
-Default: 16.
-
-=item o frame_color => $string
-
-Specify the color of the frame, if any.
-
-See also C<draw_frame>.
-
-Default: '#0000ff'.
-
-=item o input_file => $string
-
-Specify the name of the *.clad file to read. Of course, the suffix does not have to be 'clad'.
-
-The format of this file is specified in the L<FAQ>.
+Default: 16 (points).
 
 =item o left_margin => $integer
 
@@ -1231,15 +1178,35 @@ Specify the name of the image file to write.
 
 Image formats supported are anything supported by L<Imager>. See the L<FAQ> for more.
 
+Default: '' (no output).
+
 =item o print_tree => $Boolean
 
 Specify that you want to print the tree constructed by the code.
 
-This option is really for my benefit.
+This option is really a debugging aid.
 
 Note: Nothing is printed unless C<verbose> is set to 1.
 
 Default: 0 (no tree).
+
+=item o title_font_color => $string
+
+Specify the font color of the name of each leaf.
+
+Default: '#000000' (black).
+
+=item o title_font_file => $string
+
+Specify the name of the font file to use for the names of the leaves.
+
+Default: '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf'.
+
+=item o leaf_font_size => $integer
+
+Specify the size of the text used for the name of each leaf.
+
+Default: 16 (points).
 
 =item o top_margin => $integer
 
@@ -1374,6 +1341,10 @@ Note: You must also set C<verbose> before anything is printed.
 
 C<print_tree> is a parameter to L</new()>.
 
+=head2 run()
+
+After calling L</new()>, this is the only other method you would normally call.
+
 =head2 top_margin(([$integer])
 
 Get or set the distance from the top edge at which drawing starts.
@@ -1410,6 +1381,152 @@ C<y_step> is a parameter to L</new()>.
 
 =head1 FAQ
 
+=head2 What is the format of the input file?
+
+Sample 1 - L<https://en.wikipedia.org/wiki/Cladogram>:
+
+			+---- Beetles
+			|
+			|
+	Root ---+	+---- Wasps, bees, ants
+			|	|
+			|	|
+			1---+	+---- Butterflies, moths
+				|	|
+				|	|
+				2---+
+					|
+					|
+					+---- Flies
+
+For matching data file, see data/cladogram.01.clad:
+
+	Parent	Place	Node
+	root	above	Beetles
+	root	below	1
+	1		above	Wasps, bees, ants
+	1		below	2
+	2		above	Butterflies, moths
+	2		below	Flies
+
+Sample 2 - <http://phenomena.nationalgeographic.com/2015/12/11/paleo-profile-the-smoke-hill-bird/>:
+
+			+--- Archaeopterix lithographica
+			|
+			|
+			|
+	Root ---+	+--- Apsaravis ukhaana
+			|	|
+			|	|
+			|	|
+			1---+	+--- Gansus yumemensis
+				|	|
+				|	|
+				|	|
+				2---+	+--- Ichthyornis dispar
+					|	|
+					|	|		+--- Gallus gallus
+					|	|		|
+					3---+	5---+
+						|	|	|
+						|	|	+--- Anas clypeata
+						|	|
+						4---+
+							|	+--- Pasquiaornis
+							|	|
+							|	|
+							6---+	+--- Enaliornis
+								|	|
+								|	|
+								|	|
+								7---+	+--- Baptornis advenus
+									|	|
+									|	|		+--- Brodavis varnei
+									|	|		|
+									8---+	10--+
+										|	|	|
+										|	|	+--- Brodavis baileyi
+										|	|
+										9---+
+											|	+--- Fumicollis hoffmani
+											|	|
+											|	|
+											11--+	+--- Parahesperornis alexi
+												|	|
+												|	|
+												12--+
+													|
+													|
+													+--- Hesperornis regalis
+
+For matching data file, see data/nationalgeographic.01.clad:
+
+	Parent	Place	Node
+	root	above	Archaeopterix lithographica
+	root	below	1
+	1		above	Apsaravis ukhaana
+	1		below	2
+	2		above	Gansus yumemensis
+	2		below	3
+	3		above	Ichthyornis dispar
+	3		below	4
+	4		above	5
+	4		below	6
+	5		above	Gallus gallus
+	5		below	Anas clypeata
+	6		above	Pasquiaornis
+	6		below	7
+	7		above	Enaliornis
+	7		below	8
+	8		above	Baptornis advenus
+	8		below	9
+	9		above	10
+	9		below	11
+	10		above	Brodavis varnei
+	10		below	Brodavis baileyi
+	11		above	Fumicollis hoffmani
+	11		below	12
+	12		above	Parahesperornis alexi
+	12		below	Hesperornis regalis
+
+Guidelines:
+
+=over 4
+
+=item o Add lines are tab separated
+
+=item o There are 3 columns
+
+=over 4
+
+=item o The first line must match /Parent\tPlace\tNode/i
+
+=item o The word 'root' is case-insensitive
+
+=item o Column 1 is the name of the node
+
+Notice how every node has 2 mandatory lines.
+
+=item o Column 2 specifies where the daughter appears in relation to the node
+
+=item o All words after the 2nd column are the name of that daughter
+
+=back
+
+=item o Fabricate skeleton nodes to hold together the nodes you are interested in.
+
+=item o Use digits for the fake node names, since the code hides the name of nodes in these cases:
+
+=over 4
+
+=item o The name matches /^\d+$/
+
+=item o The name matches 'root'
+
+=back
+
+=back
+
 =head2 What image formats are supported?
 
 My default install of L<Imager> lists:
@@ -1423,7 +1540,9 @@ My default install of L<Imager> lists:
 
 =head2 What font formats are supported?
 
-This text is copied from the docs for L<Imager::Font>:
+See scripts/plot.sh for a list of fonts I have played with while developing this module.
+
+Further, this text is copied from the docs for L<Imager::Font>:
 
 	This module handles creating Font objects used by Imager. The module also handles querying
 	fonts for sizes and such. If both T1lib and FreeType were available at the time of compilation
@@ -1443,10 +1562,50 @@ My default install of L<Imager> lists:
 
 If you're using L<Debian|http://debian.org>, run C<fc-list> for a list of installed fonts.
 
-More information on Debian's support for fonts can be found L<here|https://wiki.debian.org/Fonts>.
+More information on Debian's support for fonts can be found on Debian's
+L<wiki|https://wiki.debian.org/Fonts>.
+
+=head1 See Also
+
+L<Imager>
+
+L<Tree::DAG_Node>
 
 =head1 TODO
 
-Split code to support L<Imager> and L<Image::Magick>.
+Create 2 sub-classes, to support L<Imager> and L<Image::Magick>.
+
+=head1 Machine-Readable Change Log
+
+The file Changes was converted into Changelog.ini by L<Module::Metadata::Changes>.
+
+=head1 Version Numbers
+
+Version numbers < 1.00 represent development versions. From 1.00 up, they are production versions.
+
+=head1 Repository
+
+L<https://github.com/ronsavage/Tree-Cladogram>
+
+=head1 Support
+
+Email the author, or log a bug on RT:
+
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=Tree::Cladogram>.
+
+=head1 Author
+
+L<Tree::Cladogram> was written by Ron Savage I<E<lt>ron@savage.net.auE<gt>> in 2015.
+
+My homepage: L<http://savage.net.au/>
+
+=head1 Copyright
+
+Australian copyright (c) 2015, Ron Savage.
+
+	All Programs of mine are 'OSI Certified Open Source Software';
+	you can redistribute them and/or modify them under the terms of
+	The Artistic License 2.0, a copy of which is available at:
+	http://opensource.org/licenses/alphabetical.
 
 =cut

@@ -28,6 +28,7 @@ if ($option_parser -> getoptions
 	'print_tree=i',
 	'title=s',
 	'title_font_file=s',
+	'title_font_size=s',
 	'verbose=i',
 ) )
 {
@@ -69,6 +70,7 @@ plot.pl [options]
 	-title $string
 	-title_font_color $string
 	-title_font_file $path2font
+	-title_font_size $integer
 	-verbose $Boolean
 
 All switches can be reduced to a single letter.
