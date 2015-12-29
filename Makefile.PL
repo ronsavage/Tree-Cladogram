@@ -13,19 +13,19 @@ WriteMakefile
 	($] ge '5.005') ?
 	(
 		AUTHOR   => 'Ron Savage (ron@savage.net.au)',
-		ABSTRACT => 'Manage the "flowers" database',
+		ABSTRACT => 'Render a tree as a cladogram',
 	) : (),
 	clean =>
 	{
-		FILES => 'blib/* Makefile MANIFEST Local-Flowers-*'
+		FILES => 'blib/* Makefile MANIFEST Tree-Cladogram-*'
 	},
 	dist =>
 	{
 		COMPRESS => 'gzip',
 		SUFFIX   => 'gz'
 	},
-	DISTNAME  => 'Local-Flowers',
-	NAME      => 'Local::Flowers',
+	DISTNAME  => 'Tree-Cladogram',
+	NAME      => 'Tree::Cladogram',
 	LICENSE   => 'artistic_2',
 	PL_FILES  => {},
 	PREREQ_PM =>
@@ -44,5 +44,5 @@ WriteMakefile
 		'Types::Standard'	=> 1.00000,
 		'warnings'			=> 0,
 	},
-	VERSION_FROM => 'lib/Local/Flowers.pm',
+	VERSION_FROM => 'lib/Tree/Cladogram.pm',
 );
