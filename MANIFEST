@@ -7,6 +7,7 @@ data/VeraBd.ttf
 data/wikipedia.01.clad
 data/wikipedia.01.png
 lib/Tree/Cladogram.pm
+lib/Tree/Cladogram/Imager.pm
 Makefile.PL
 MANIFEST			This list of files
 META.json
