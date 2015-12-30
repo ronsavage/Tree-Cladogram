@@ -103,12 +103,13 @@ for i in nationalgeographic wikipedia; do
 	#echo $NAME.01.clad
 
 	perl -Ilib scripts/plot.pl \
+		-debug 1 \
 		-draw_frame $FRAME \
 		-input_file data/$i.01.clad \
 		-leaf_font_file $LEAF_FONT_FILE \
 		-output_file data/$i.01.png \
 		-title "$TITLE" \
-		-title_font_file $TITLE_FONT_FILE \
+		-title_font_file $TITLE_FONT_FILE
 
 	identify data/$i.01.png
 

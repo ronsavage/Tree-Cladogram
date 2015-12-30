@@ -229,7 +229,7 @@ has x_step =>
 
 has y_step =>
 (
-	default  => sub{return 40},
+	default  => sub{return 36},
 	is       => 'rw',
 	isa      => Int,
 	required => 0,
@@ -339,7 +339,8 @@ sub check_node_bounds
 
 	my($attributes_2);
 	my($bounds_2);
-	my($name_1, $name_2);
+	my($candidate_step);
+	my($parent_attributes);
 	my($uid_2);
 
 	$self -> root -> walk_down
@@ -356,15 +357,16 @@ sub check_node_bounds
 			{
 				if ($self -> check_rectangle_within_rectangle($bounds_1, $bounds_2) )
 				{
-					$name_1	= $node_1 -> name;
-					$name_2	= $node_2 -> name;
+					# Move the node down to avoid the overlap.
+					# This assumes it's an 'above' node.
+					# The formula for $candidate_step is my own invention,
+					# selected after many experiments.
 
-					# TODO: This always moves text down. Do we need to check 'place'?
-
-					$$attributes_2{y}		+= $leaf_font_size + 6;
-					$$bounds_2[1]			+= $leaf_font_size + 6;
-					$$bounds_2[3]			+= $leaf_font_size + 6;
+					$candidate_step			= int($leaf_font_size / 2) + 8;
+					$$bounds_2[1]			+= $candidate_step;
+					$$bounds_2[3]			+= $candidate_step;
 					$$attributes_2{bounds}	= $bounds_2;
+					$$attributes_2{y}		+= $candidate_step;
 
 					$node_2 -> attributes($attributes_2);
 				}
@@ -572,6 +574,8 @@ sub draw_leaf_name
 	if ( (length($name) > 0) && ($name !~ /^\d+$/) )
 	{
 		my($bounds) 	= $$daughter_attributes{bounds};
+		$$bounds[0]		+= $final_offset;
+		$$bounds[2]		+= $final_offset;
 		my($fuschia)	= Imager::Color -> new(0xff, 0, 0xff);
 
 		$image -> string
@@ -579,11 +583,11 @@ sub draw_leaf_name
 			align	=> 0,
 			font	=> $self -> leaf_font,
 			string	=> $name,
-			x		=> $$bounds[0] + $final_offset,
+			x		=> $$bounds[0],
 			y		=> $$bounds[1],
 		);
 
-		if ($self -> debug)
+		if ($self -> debug && 0)
 		{
 			$image -> box
 			(
@@ -1334,6 +1338,10 @@ After calling L</new()>, this is the only other method you would normally call.
 
 Get or set the title to be drawn at the bottom of the image.
 
+Note: It's vital you set the title before calling L</run()>, since the width of the title might
+be greater that the width of the tree, and the width of the title would then be used to determine
+the width of the image to create.
+
 C<title> is a parameter to L</new()>.
 
 =head2 title_font_color([$string])
@@ -1563,6 +1571,34 @@ If you're using L<Debian|http://debian.org>, run C<fc-list> for a list of instal
 More information on Debian's support for fonts can be found on Debian's
 L<wiki|https://wiki.debian.org/Fonts>.
 
+=head2 How does leaf_font_size interact with y_step?
+
+This might depend on the font, but here are some tests I ran with the default leaf font:
+
+=over 4
+
+=item o leaf_font_size 12 works with y_step values of 28 .. 40
+
+=item o leaf_font_size 16 works with y_step values of 36 .. 44
+
+=item o leaf_font_size 20 works with y_step values of 40 .. 48
+
+=item o leaf_font_size 24 works with a y_step value of 48
+
+=item o leaf_font_size 28 works with a y_step value of 54
+
+=item o leaf_font_size 32 works with a y_step value of 54
+
+=item o leaf_font_size 36 works with a y_step value of 72
+
+=item o leaf_font_size 40 works with a y_step value of 72
+
+=back
+
+=head2 How is overlap between leaves detected?
+
+The process starts by calling the undocumented method C<check_for_overlap()>.
+
 =head1 See Also
 
 L<Imager>
@@ -1571,7 +1607,13 @@ L<Tree::DAG_Node>
 
 =head1 TODO
 
-Create 2 sub-classes, to support L<Imager> and L<Image::Magick>.
+=over 4
+
+=item o Create 2 sub-classes, to support L<Imager> and L<Image::Magick>
+
+=item o In check_node_bounds(), could there be cases when nodes should be moved up?
+
+=back
 
 =head1 Machine-Readable Change Log
 

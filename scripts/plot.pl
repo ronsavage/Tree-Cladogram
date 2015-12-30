@@ -20,6 +20,7 @@ if ($option_parser -> getoptions
 	\%option,
 	'branch_color=s',
 	'branch_width=i',
+	'debug=i',
 	'draw_frame=i',
 	'final_x_step=i',
 	'frame_color=s',
@@ -66,26 +67,27 @@ plt.pl plots a cladogram.
 plot.pl [options]
 
 	Options:
-	-branch_color  string
-	-branch_width  integer
-	-draw_frame  integer
-	-final_x_step  integer
-	-frame_color  string
+	-branch_color  $string
+	-branch_width  $integer
+	-debug  $Boolean
+	-draw_frame  $Boolean
+	-final_x_step  $integer
+	-frame_color  $string
 	-help
-	-input_file  string
-	-leaf_font_color  string
-	-leaf_font_file  string
-	-leaf_font_size  integer
-	-left_margin  integer
-	-output_file  string
-	-print_tree  integer
-	-title  string
-	-title_font_color  string
-	-title_font_file  string
-	-title_font_size  integer
-	-top_margin  integer
-	-x_step  iteger
-	-y_step  iteger
+	-input_file  $string
+	-leaf_font_color  $string
+	-leaf_font_file  $string
+	-leaf_font_size  $integer
+	-left_margin  $integer
+	-output_file  $string
+	-print_tree  $Boolean
+	-title  $string
+	-title_font_color  $string
+	-title_font_file  $string
+	-title_font_size  $integer
+	-top_margin  $integer
+	-x_step  $iteger
+	-y_step  $iteger
 
 All switches can be reduced to a single letter.
 
@@ -106,6 +108,14 @@ Specify the thickness of the branches.
 Default: 3 (px).
 
 =item o -branch_width $integer
+
+Specify the thickness of the branches.
+
+Default: 3 (px).
+
+=item o -debug $Boolean
+
+Reserved for the use of the author ;-).
 
 =item o -draw_frame $Boolean
 
@@ -161,6 +171,8 @@ This file ships as data/VeraBd.ttf.
 
 The pointsize of the font used for leaf names.
 
+Default: 16 (points).
+
 =item o -left_margin $integer
 
 Specify the distance from the left of the image to the left-most point at which something is drawn.
@@ -209,6 +221,8 @@ This file ships as data/FreeSansBold.ttf.
 
 The pointsize of the font used for the title.
 
+Default: 16 (points).
+
 =item o -top_margin $integer
 
 Specify the distance from the top of the image to the top-most point at which something is drawn.
@@ -232,7 +246,7 @@ drawn.
 
 See also C<x_step>.
 
-Default: 40 (px).
+Default: 36 (px).
 
 =back
 
