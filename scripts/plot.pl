@@ -7,7 +7,7 @@ use Getopt::Long;
 
 use Pod::Usage;
 
-use Tree::Cladogram;
+use Tree::Cladogram::Imager;
 
 # ----------------------------------------------
 
@@ -43,7 +43,7 @@ if ($option_parser -> getoptions
 {
 	pod2usage(1) if ($option{'help'});
 
-	exit Tree::Cladogram -> new(%option) -> run;
+	exit Tree::Cladogram::Imager -> new(%option) -> run;
 }
 else
 {
