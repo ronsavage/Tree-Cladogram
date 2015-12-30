@@ -32,7 +32,7 @@ has draw_frame =>
 	required => 0,
 );
 
-has debug =>		# Internal.
+has debug =>
 (
 	default  => sub{return 0},
 	is       => 'rw',
@@ -136,7 +136,7 @@ has print_tree =>
 	required => 0,
 );
 
-has root =>		# Internal.
+has root =>
 (
 	default  => sub{return ''},
 	is       => 'rw',
@@ -192,7 +192,7 @@ has top_margin =>
 	required => 0,
 );
 
-has uid =>		# Internal.
+has uid =>
 (
 	default  => sub{return 0},
 	is       => 'rw',
@@ -230,125 +230,7 @@ sub BUILD
 
 # ------------------------------------------------
 
-sub check_point_within_rectangle
-{
-	my($self, $bounds_1, $x, $y) = @_;
-	my($result)	= 0;
-	my($x_min)	= $$bounds_1[0];
-	my($y_min)	= $$bounds_1[1];
-	my($x_max)	= $$bounds_1[2];
-	my($y_max)	= $$bounds_1[3];
-
-	if ( ($x >= $x_min) && ($x <= $x_max)
-		&&	($y >= $y_min) && ($y <= $y_max) )
-	{
-		$result = 1;
-	}
-
-	return $result;
-
-} # End of check_point_within_rectangle.
-
-# ------------------------------------------------
-
-sub check_rectangle_within_rectangle
-{
-	my($self, $bounds_1, $bounds_2) = @_;
-	my($result)		= 0;
-	my($x_min_2)	= $$bounds_2[0];
-	my($y_min_2)	= $$bounds_2[1];
-	my($x_max_2)	= $$bounds_2[2];
-	my($y_max_2)	= $$bounds_2[3];
-
-	if ($self -> check_point_within_rectangle($bounds_1, $x_min_2, $y_min_2)
-		||	$self -> check_point_within_rectangle($bounds_1, $x_max_2, $y_min_2)
-		||	$self -> check_point_within_rectangle($bounds_1, $x_min_2, $y_max_2)
-		||	$self -> check_point_within_rectangle($bounds_1, $x_max_2, $y_max_2) )
-	{
-		$result = 1;
-	}
-
-	return $result;
-
-} # End of check_rectangle_within_rectangle.
-
-# ------------------------------------------------
-
-sub check_node_bounds
-{
-	my($self, $node_1)	= @_;
-	my($leaf_font_size)	= $self -> leaf_font_size;
-	my($attributes_1)	= $node_1 -> attributes;
-	my($bounds_1)		= $$attributes_1{bounds};
-	my($uid_1)			= $$attributes_1{uid};
-
-	my($attributes_2);
-	my($bounds_2);
-	my($candidate_step);
-	my($parent_attributes);
-	my($uid_2);
-
-	$self -> root -> walk_down
-	({
-		callback =>
-		sub
-		{
-			my($node_2)		= @_;
-			$attributes_2	= $node_2 -> attributes;
-			$bounds_2		= $$attributes_2{bounds};
-			$uid_2			= $$attributes_2{uid};
-
-			if ($uid_1 < $uid_2)
-			{
-				if ($self -> check_rectangle_within_rectangle($bounds_1, $bounds_2) )
-				{
-					# Move the node down to avoid the overlap.
-					# This assumes it's an 'above' node.
-					# The formula for $candidate_step is my own invention,
-					# selected after many experiments.
-
-					$candidate_step			= int($leaf_font_size / 2) + 8;
-					$$bounds_2[1]			+= $candidate_step;
-					$$bounds_2[3]			+= $candidate_step;
-					$$attributes_2{bounds}	= $bounds_2;
-					$$attributes_2{y}		+= $candidate_step;
-
-					$node_2 -> attributes($attributes_2);
-				}
-			}
-
-			return 1; # Keep walking.
-		},
-		_depth	=> 0,
-	});
-
-} # End of check_node_bounds.
-
-# ------------------------------------------------
-
-sub check_for_overlap
-{
-	my($self) = @_;
-
-	$self -> root -> walk_down
-	({
-		callback =>
-		sub
-		{
-			my($node) = @_;
-
-			$self -> check_node_bounds($node);
-
-			return 1; # Keep walking.
-		},
-		_depth	=> 0,
-	});
-
-} # End of check_for_overlap.
-
-# ------------------------------------------------
-
-sub compute_co_ords
+sub _calculate_basic_attributes
 {
 	my($self)	= @_;
 	my($x_step)	= $self -> x_step;
@@ -399,7 +281,125 @@ sub compute_co_ords
 		_depth	=> 0,
 	});
 
-} # End of compute_co_ords.
+} # End of _calculate_basic_attributes.
+
+# ------------------------------------------------
+
+sub _check_point_within_rectangle
+{
+	my($self, $bounds_1, $x, $y) = @_;
+	my($result)	= 0;
+	my($x_min)	= $$bounds_1[0];
+	my($y_min)	= $$bounds_1[1];
+	my($x_max)	= $$bounds_1[2];
+	my($y_max)	= $$bounds_1[3];
+
+	if ( ($x >= $x_min) && ($x <= $x_max)
+		&&	($y >= $y_min) && ($y <= $y_max) )
+	{
+		$result = 1;
+	}
+
+	return $result;
+
+} # End of _check_point_within_rectangle.
+
+# ------------------------------------------------
+
+sub _check_rectangle_within_rectangle
+{
+	my($self, $bounds_1, $bounds_2) = @_;
+	my($result)		= 0;
+	my($x_min_2)	= $$bounds_2[0];
+	my($y_min_2)	= $$bounds_2[1];
+	my($x_max_2)	= $$bounds_2[2];
+	my($y_max_2)	= $$bounds_2[3];
+
+	if ($self -> _check_point_within_rectangle($bounds_1, $x_min_2, $y_min_2)
+		||	$self -> _check_point_within_rectangle($bounds_1, $x_max_2, $y_min_2)
+		||	$self -> _check_point_within_rectangle($bounds_1, $x_min_2, $y_max_2)
+		||	$self -> _check_point_within_rectangle($bounds_1, $x_max_2, $y_max_2) )
+	{
+		$result = 1;
+	}
+
+	return $result;
+
+} # End of _check_rectangle_within_rectangle.
+
+# ------------------------------------------------
+
+sub _check_node_bounds
+{
+	my($self, $node_1)	= @_;
+	my($leaf_font_size)	= $self -> leaf_font_size;
+	my($attributes_1)	= $node_1 -> attributes;
+	my($bounds_1)		= $$attributes_1{bounds};
+	my($uid_1)			= $$attributes_1{uid};
+
+	my($attributes_2);
+	my($bounds_2);
+	my($candidate_step);
+	my($parent_attributes);
+	my($uid_2);
+
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node_2)		= @_;
+			$attributes_2	= $node_2 -> attributes;
+			$bounds_2		= $$attributes_2{bounds};
+			$uid_2			= $$attributes_2{uid};
+
+			if ($uid_1 < $uid_2)
+			{
+				if ($self -> _check_rectangle_within_rectangle($bounds_1, $bounds_2) )
+				{
+					# Move the node down to avoid the overlap.
+					# This assumes it's an 'above' node.
+					# The formula for $candidate_step is my own invention,
+					# selected after many experiments.
+
+					$candidate_step			= int($leaf_font_size / 2) + 8;
+					$$bounds_2[1]			+= $candidate_step;
+					$$bounds_2[3]			+= $candidate_step;
+					$$attributes_2{bounds}	= $bounds_2;
+					$$attributes_2{y}		+= $candidate_step;
+
+					$node_2 -> attributes($attributes_2);
+				}
+			}
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+} # End of _check_node_bounds.
+
+# ------------------------------------------------
+
+sub _check_for_overlap
+{
+	my($self) = @_;
+
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node) = @_;
+
+			$self -> _check_node_bounds($node);
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+} # End of _check_for_overlap.
 
 # ------------------------------------------------
 
@@ -727,11 +727,11 @@ sub run
 	my($self) = @_;
 
 	$self -> read;
-	$self -> compute_co_ords;
+	$self -> _calculate_basic_attributes;
 	$self -> find_minimum_y;
 	$self -> move_away_from_frame if ($self -> minimum_y <= $self -> top_margin);
-	$self -> place_text;
-	$self -> check_for_overlap;
+	$self -> _calculate_leaf_name_bounds;
+	$self -> _check_for_overlap;
 	$self -> find_maximum_x;
 	$self -> find_maximum_y;
 	$self -> draw_image;
@@ -1093,6 +1093,14 @@ option.
 
 C<print_tree> is a parameter to L</new()>.
 
+=head2 root()
+
+Get the root of the tree built by calling run(). This tree is an object of type L<Tree::DAG_Node>.
+
+For printing the tree, see L</print_tree([$Boolean])>.
+
+Normally, end-users would never call this method.
+
 =head2 run()
 
 After calling L</new()>, this is the only other method you would normally call.
@@ -1360,7 +1368,7 @@ This might depend on the font, but here are some tests I ran with the default le
 
 =head2 How is overlap between leaves detected?
 
-The process starts by calling the undocumented method C<check_for_overlap()>.
+The process starts by calling the undocumented method C<_check_for_overlap()>.
 
 =head1 See Also
 
@@ -1374,7 +1382,7 @@ L<Tree::DAG_Node>
 
 =item o Create 2 sub-classes, to support L<Imager> and L<Image::Magick>
 
-=item o In check_node_bounds(), could there be cases when nodes should be moved up?
+=item o In _check_node_bounds(), could there be cases when nodes should be moved up?
 
 =back
 

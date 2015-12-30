@@ -1,9 +1,8 @@
-package Tree::Cladogram::Imager;
+package Tree::Cladogram::ImageMagick;
 
 use parent 'Tree::Cladogram';
 
-use Imager;
-use Imager::Fill;
+use Image::Magick;
 
 use Moo;
 
@@ -17,7 +16,7 @@ has leaf_font =>
 	required => 0,
 );
 
-has title_font =>              # Internal.
+has title_font =>
 (
 	default  => sub{return ''},
 	is       => 'rw',
@@ -32,6 +31,8 @@ our $VERSION = '1.00';
 sub BUILD
 {
 	my($self) = @_;
+
+=pod
 
 	$self -> leaf_font
 	(
@@ -69,6 +70,8 @@ sub BUILD
 		$self -> title_width($bounds[2]);
 	}
 
+=cut
+
 } # End of BUILD.
 
 # ------------------------------------------------
@@ -76,13 +79,10 @@ sub BUILD
 sub create_image
 {
 	my($self, $maximum_x, $maximum_y) = @_;
+	my($image)			= Imager -> new(width => $maximum_x, height => $maximum_y);
 
-	my($image)			= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
-	my($frame_color)	= Imager::Color -> new($self -> frame_color);
-	my($white)			= Imager::Color -> new(255, 255, 255);
-
-	$image -> box(color => $white, filled => 1);
-	$image -> box(color => $frame_color) if ($self -> draw_frame);
+	$image -> Read('canvas:white');
+	$image -> Frame(fill => $self -> frame_color, width => 1, height => 1) if ($self -> draw_frame);
 
 	return $image;
 
@@ -93,6 +93,9 @@ sub create_image
 sub draw_horizontal_branch
 {
 	my($self, $image, $middle_attributes, $daughter_attributes, $final_offset) = @_;
+
+=pod
+
 	my($branch_color)	= $self -> branch_color;
 	my($branch_width)	= $self -> branch_width - 1;
 	my($x_step)			= $self -> x_step;
@@ -110,6 +113,8 @@ sub draw_horizontal_branch
 		filled	=> 1,
 	);
 
+=cut
+
 } # End of draw_horizontal_branch.
 
 # ------------------------------------------------
@@ -117,6 +122,8 @@ sub draw_horizontal_branch
 sub draw_leaf_name
 {
 	my($self, $image, $name, $daughter_attributes, $final_offset) = @_;
+
+=pod
 
 	if ( (length($name) > 0) && ($name !~ /^\d+$/) )
 	{
@@ -145,6 +152,8 @@ sub draw_leaf_name
 		}
 	}
 
+=cut
+
 } # End of draw_leaf_name.
 
 # ------------------------------------------------
@@ -152,6 +161,9 @@ sub draw_leaf_name
 sub draw_root_branch
 {
 	my($self, $image)			= @_;
+
+=pod
+
 	my($branch_color)			= $self -> branch_color;
 	my($branch_width)			= $self -> branch_width - 1;
 	my($attributes)				= $self -> root -> attributes;
@@ -171,6 +183,8 @@ sub draw_root_branch
 		filled	=> 1,
 	);
 
+=cut
+
 } # End of draw_root_branch.
 
 # ------------------------------------------------
@@ -182,23 +196,22 @@ sub draw_title
 
 	if (length($title) > 0)
 	{
-		my(@bounds) = $self -> title_font -> align
+		my(@metrics) = $image -> QueryFontMetrics
 						(
-							halign	=> 'left',
-							image	=> undef,
-							string	=> $title,
-							valign	=> 'baseline',
-							x		=> 0,
-							y		=> 0,
+							font		= $self -> leaf_font_file,
+							pointsize	= $self -> leaf_font_size,
+							text		=> $title,
+							x			=> 0,
+							y			=> 0,
 						);
 
-		$image -> string
+		$image -> Annotate
 		(
-			align	=> 0,
-			font	=> $self -> title_font,
-			string	=> $title,
-			x		=> int( ($maximum_x - $bounds[2]) / 2),
-			y		=> $maximum_y - $self -> top_margin,
+			font		= $self -> leaf_font_file,
+			pointsize	= $self -> leaf_font_size,
+			text		=> $title,
+			x			=> int( ($maximum_x - $bounds[4]) / 2),
+			y			=> $maximum_y - $self -> top_margin,
 		);
 	}
 
@@ -209,6 +222,9 @@ sub draw_title
 sub draw_vertical_branch
 {
 	my($self, $image, $middle_attributes, $daughter_attributes) = @_;
+
+=pod
+
 	my($branch_color)	= $self -> branch_color;
 	my($branch_width)	= $self -> branch_width - 1;
 
@@ -225,6 +241,8 @@ sub draw_vertical_branch
 		filled	=> 1,
 	);
 
+=cut
+
 } # End of draw_vertical_branch.
 
 # ------------------------------------------------
@@ -232,6 +250,9 @@ sub draw_vertical_branch
 sub _calculate_leaf_name_bounds
 {
 	my($self)			= @_;
+
+=pod
+
 	my($leaf_font_size)	= $self -> leaf_font_size;
 	my($x_step)			= $self -> x_step;
 
@@ -262,6 +283,8 @@ sub _calculate_leaf_name_bounds
 		},
 		_depth	=> 0,
 	});
+
+=cut
 
 } # End of _calculate_leaf_name_bounds.
 
