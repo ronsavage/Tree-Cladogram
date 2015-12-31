@@ -90,7 +90,7 @@ echo Font: $LEAF_FONT_FILE
 
 for i in nationalgeographic wikipedia; do
 
-	rm -rf data/$i.01.png $DR/$i.01.png
+	rm -rf data/$i.01.png $DR/misc/$i.01.png
 
 	if [ "$i" == "wikipedia" ]; then
 		FRAME=1
@@ -113,5 +113,5 @@ for i in nationalgeographic wikipedia; do
 
 	identify data/$i.01.png
 
-	cp data/$i.01.png $DR
+	cp data/$i.01.png $DR/misc
 done
