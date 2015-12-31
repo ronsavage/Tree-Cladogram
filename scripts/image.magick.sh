@@ -1,6 +1,4 @@
 #!/bin/bash
-#
-# Note: Imager was used to render the text.
 
 # Great.
 

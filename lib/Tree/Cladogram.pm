@@ -1317,9 +1317,24 @@ My default install of L<Imager> lists:
 
 =head2 What font formats are supported?
 
-See scripts/plot.sh for a list of fonts I have played with while developing this module.
+Check these directories:
 
-Further, this text is copied from the docs for L<Imager::Font>:
+=over
+
+=item o /usr/local/share/fonts
+
+=item o /usr/share/fonts
+
+=back
+
+If you're using L<Debian|http://debian.org>, run C<fc-list> for a list of installed fonts.
+
+More information on Debian's support for fonts can be found on Debian's
+L<wiki|https://wiki.debian.org/Fonts>.
+
+See scripts/imager.sh for a list of fonts I have played with while developing this module.
+
+Further, note this text copied from the docs for L<Imager::Font>:
 
 	This module handles creating Font objects used by Imager. The module also handles querying
 	fonts for sizes and such. If both T1lib and FreeType were available at the time of compilation
@@ -1333,14 +1348,9 @@ Further, this text is copied from the docs for L<Imager::Font>:
 	print "Has Win32 fonts\n"   if $Imager::formats{w32};
 	print "Has Freetype2\n"     if $Imager::formats{ft2};
 
-My default install of L<Imager> lists:
+My default install of L<Imager> reports:
 
 	Has Freetype2
-
-If you're using L<Debian|http://debian.org>, run C<fc-list> for a list of installed fonts.
-
-More information on Debian's support for fonts can be found on Debian's
-L<wiki|https://wiki.debian.org/Fonts>.
 
 =head2 How does leaf_font_size interact with y_step?
 
