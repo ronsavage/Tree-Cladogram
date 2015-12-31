@@ -11,7 +11,7 @@ use Image::Magick;
 # ----------------
 
 my($out_file_name)	= shift || die "Usage: $0 output_file_name \n";
-my($font_file)		= '/usr/local/share/fonts/truetype/gothic.ttf';
+my($font_file)		= '/usr/share/fonts/truetype/freefont/FreeMono.ttf';
 my($font_size)		= 16;
 my($frame_color)	= 'purple';
 my($title)			= 'The diversity of hesperornithiforms. From Bell and Chiappe, 2015';
@@ -51,8 +51,8 @@ my(@y) = (0, 0, ($maximum_y - 1), ($maximum_y - 1) );
 $result = $image -> Draw
 			(
 				fill		=> 'none',
-				primitive	=> 'polyline',
 				points		=> "$x[0],$y[0] $x[1],$y[1] $x[2],$y[2] $x[3],$y[3] $x[0],$y[0]",
+				primitive	=> 'polyline',
 				stroke		=> $frame_color,
 				strokewidth	=> 2,
 			);
@@ -102,6 +102,26 @@ $result = $image -> Draw
 			);
 
 die $result if $result;
+
+# Put tic marks down the left of that rectangle.
+
+@x = (90, 91);
+
+for (my $y = 0; $y <= $maximum_y; $y += 10)
+{
+	@y = ($y, $y + 1);
+
+	$result = $image -> Draw
+				(
+					fill		=> 'green',
+					method		=> 'replace',
+					points		=> "$x[0],$y[0] $x[1],$y[1]",
+					primitive	=> 'rectangle',
+				);
+
+	die $result if $result;
+
+}
 
 # Put the title in the bottom-center.
 

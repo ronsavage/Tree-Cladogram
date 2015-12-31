@@ -85,6 +85,8 @@ sub _calculate_leaf_name_bounds
 							);
 			$$attributes{bounds} = [@bounds];
 
+			$self -> log('1 Leaf: ' . $node -> name . " \@ ($bounds[0], $bounds[1])");
+
 			$node -> attributes($attributes);
 
 			return 1; # Keep walking.
@@ -98,16 +100,16 @@ sub _calculate_leaf_name_bounds
 
 sub _calculate_title_metrics
 {
-	my($self, $image)	= @_;
-	my(@metrics)		= $self -> title_font -> align
-							(
-								halign	=> 'left',
-								image	=> undef,
-								string	=> $self -> title,
-								valign	=> 'baseline',
-								x		=> 0,
-								y		=> 0,
-							);
+	my($self, $image, $maximum_x, $maximum_y) = @_;
+	my(@metrics) = $self -> title_font -> align
+					(
+						halign	=> 'left',
+						image	=> undef,
+						string	=> $self -> title,
+						valign	=> 'baseline',
+						x		=> 0,
+						y		=> 0,
+					);
 
 	$self -> title_width($metrics[2] + 1);
 
@@ -175,14 +177,16 @@ sub draw_leaf_name
 			y		=> $$bounds[1],
 		);
 
-		if ($self -> debug && 0)
+		$self -> log('2 Leaf: ' . $name . " \@ ($$bounds[0], $$bounds[1])");
+
+		if ($self -> debug)
 		{
-			my($fuschia) = Imager::Color -> new(0xff, 0, 0xff);
+			my($fuchsia) = Imager::Color -> new(0xff, 0, 0xff);
 
 			$image -> box
 			(
 				box		=> $bounds,
-				color	=> $fuschia,
+				color	=> $fuchsia,
 				filled	=> 0,
 			);
 		}

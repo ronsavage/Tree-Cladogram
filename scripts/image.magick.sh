@@ -18,6 +18,7 @@
 # Try.
 
 LEAF_FONT_FILE=/usr/share/fonts/type1/gsfonts/n022003l.pfb
+LEAF_FONT_FILE=/usr/share/fonts/truetype/dejavu/DejaVuSans-ExtraLight.ttf
 
 TITLE_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeMono.ttf
 

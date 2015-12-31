@@ -74,7 +74,7 @@ has leaf_font_color =>
 
 has leaf_font_file =>
 (
-	default  => sub{return '/usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf'},
+	default  => sub{return '/usr/share/fonts/truetype/freefont/FreeMono.ttf'},
 	is       => 'rw',
 	isa      => Str,
 	required => 0,
@@ -162,7 +162,7 @@ has title_font_color =>
 
 has title_font_file =>
 (
-	default  => sub{return '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf'},
+	default  => sub{return '/usr/share/fonts/truetype/freefont/FreeMono.ttf'},
 	is       => 'rw',
 	isa      => Str,
 	required => 0,
@@ -411,6 +411,14 @@ sub draw_image
 	my($maximum_y)		= $self -> maximum_y + $self -> top_margin;
 	my($image)			= $self -> create_image($maximum_x, $maximum_y);
 	my($x_step)			= $self -> x_step;
+
+	if ($self -> title_width > $maximum_x)
+	{
+		$maximum_x	= $self -> title_width + $self -> left_margin;
+		$image		= $self -> create_image($maximum_x, $maximum_y);
+
+		$self -> maximum_x($maximum_x);
+	}
 
 	my($attributes);
 	my(@daughters, @daughter_attributes, $daughter_attributes);

@@ -35,6 +35,7 @@ WriteMakefile
 		'Imager'			=> 1.004,
 		'Imager::Fill'		=> 1.012,
 		'Moo'				=> 2.000002,
+		'parent'			=> 0,
 		'Pod::Usage'		=> 1.67,
 		'strict'			=> 0,
 		'Test::More'		=> 1.001014,

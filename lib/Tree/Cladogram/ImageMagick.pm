@@ -28,14 +28,6 @@ our $VERSION = '1.00';
 
 # ------------------------------------------------
 
-sub BUILD
-{
-	my($self) = @_;
-
-} # End of BUILD.
-
-# ------------------------------------------------
-
 sub _calculate_leaf_name_bounds
 {
 	my($self)			= @_;
@@ -45,7 +37,6 @@ sub _calculate_leaf_name_bounds
 	my($x_step)			= $self -> x_step;
 
 	my($attributes);
-	my(@bounds);
 	my(@metrics);
 	my($x);
 	my($y);
@@ -66,9 +57,10 @@ sub _calculate_leaf_name_bounds
 								);
 			$attributes				= $node -> attributes;
 			$x						= $$attributes{x} + $x_step + 4;
-			$y						= $$attributes{y} + int($leaf_font_size / 2);
-			@bounds					= ($x, $y, $x + $metrics[11] + 1, $y + $metrics[5]);
-			$$attributes{bounds}	= [@bounds];
+			$y						= $$attributes{y} - int($leaf_font_size / 2);
+			$$attributes{bounds}	= [$x, $y, $x + $metrics[11] + 1, $y + $metrics[5]];
+
+			$self -> log('1 Leaf: ' . $node -> name . " \@ ($x, $y)");
 
 			$node -> attributes($attributes);
 
@@ -158,32 +150,40 @@ sub draw_leaf_name
 
 	if ( (length($name) > 0) && ($name !~ /^\d+$/) )
 	{
-		my($bounds) = $$daughter_attributes{bounds};
-		$$bounds[0]	+= $final_offset;
-		$$bounds[2]	+= $final_offset;
+		my($bounds)		= $$daughter_attributes{bounds};
+		$$bounds[0]		+= $final_offset;
+		$$bounds[2]		+= $final_offset;
+		my($font_size)	= $self -> leaf_font_size;
 
 		$image -> Annotate
 		(
 			font		=> $self -> leaf_font_file,
 			gravity		=> 'west',
-			pointsize	=> $self -> leaf_font_size,
+			pointsize	=> $font_size,
 			stroke		=> $self -> leaf_font_color,
 			strokewidth	=> 1,
 			text		=> $name,
 			x			=> $$bounds[0],
-			y			=> $$bounds[1],
+			y			=> $$bounds[1] - (5 * $font_size),
 		);
 
-		if ($self -> debug && 0)
-		{
-			my($fuschia) = 'fuschia'; # Imager::Color -> new(0xff, 0, 0xff);
+		$self -> log('2 Leaf: ' . $name . " \@ ($$bounds[0], $$bounds[1])");
 
-			$image -> box
-			(
-				box		=> $bounds,
-				color	=> $fuschia,
-				filled	=> 0,
-			);
+		if ($self -> debug)
+		{
+			my($fuchsia)	= 'fuchsia';
+			my(@x)			= ($$bounds[0], $$bounds[2], $$bounds[2], $$bounds[0]);
+			my(@y)			= ($$bounds[1], $$bounds[1], $$bounds[3], $$bounds[3]);
+			my($result)		= $image -> Draw
+								(
+									fill		=> 'none',
+									points		=> "$x[0],$y[0] $x[1],$y[1] $x[2],$y[2] $x[3],$y[3] $x[0],$y[0]",
+									primitive	=> 'polyline',
+									stroke		=> $fuchsia,
+									strokewidth	=> 1,
+								);
+
+			die $result if $result;
 		}
 	}
 
