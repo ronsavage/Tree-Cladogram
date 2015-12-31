@@ -85,12 +85,6 @@ sub _calculate_leaf_name_bounds
 							);
 			$$attributes{bounds} = [@bounds];
 
-			$self -> log('Leaf ' . $node -> name
-				. '. Bounds ('
-				. $bounds[0] . ', ' . $bounds[1] . ') .. ('
-				. $bounds[2] . ', ' . $bounds[2] . ')'
-			);
-
 			$node -> attributes($attributes);
 
 			return 1; # Keep walking.
@@ -117,10 +111,6 @@ sub _calculate_title_metrics
 
 	$self -> title_width($metrics[2] + 1);
 
-	$self -> log('Title metrics:');
-	$self -> log($_) for map{"$_: $metrics[$_]"} 0 .. $#metrics;
-	$self -> log("Title width: $metrics[2] + 1");
-
 } # End of _calculate_title_metrics.
 
 # ------------------------------------------------
@@ -128,9 +118,6 @@ sub _calculate_title_metrics
 sub create_image
 {
 	my($self, $maximum_x, $maximum_y) = @_;
-
-	$self -> log("Entered create_image($maximum_x, $maximum_y)");
-
 	my($image)			= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
 	my($frame_color)	= Imager::Color -> new($self -> frame_color);
 	my($white)			= Imager::Color -> new(255, 255, 255);
@@ -138,8 +125,6 @@ sub create_image
 	$image -> box(color => $white, filled => 1);
 	$self -> _calculate_title_metrics($image, $maximum_x, $maximum_y) if (length($self -> title) );
 	$image -> box(color => $frame_color) if ($self -> draw_frame);
-
-	$self -> log('Leaving create_image()');
 
 	return $image;
 

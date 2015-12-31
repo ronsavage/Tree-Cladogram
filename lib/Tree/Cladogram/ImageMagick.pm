@@ -70,12 +70,6 @@ sub _calculate_leaf_name_bounds
 			@bounds					= ($x, $y, $x + $metrics[11] + 1, $y + $metrics[5]);
 			$$attributes{bounds}	= [@bounds];
 
-			$self -> log('Leaf ' . $node -> name
-				. '. Bounds ('
-				. $metrics[0] . ', ' . $metrics[1] . ') .. ('
-				. $metrics[2] . ', ' . $metrics[2] . ')'
-			);
-
 			$node -> attributes($attributes);
 
 			return 1; # Keep walking.
@@ -90,9 +84,6 @@ sub _calculate_leaf_name_bounds
 sub _calculate_title_metrics
 {
 	my($self, $image, $maximum_x, $maximum_y) = @_;
-
-	$self -> log('Entered _calculate_title_metrics()');
-
 	my(@metrics) = $image -> QueryFontMetrics
 					(
 						font		=> $self -> title_font_file,
@@ -106,11 +97,6 @@ sub _calculate_title_metrics
 	$self -> title_x(int( ($maximum_x - $metrics[11]) / 2) );
 	$self -> title_y(int( ($maximum_y - $self -> leaf_font_size) / 2) );
 
-	$self -> log('Title metrics:');
-	$self -> log($_) for map{"$_: $metrics[$_]"} 0 .. $#metrics;
-	$self -> log("Title width: $metrics[11] + 1");
-	$self -> log('Leaving _calculate_title_metrics()');
-
 } # End of _calculate_title_metrics.
 
 # ------------------------------------------------
@@ -118,9 +104,6 @@ sub _calculate_title_metrics
 sub create_image
 {
 	my($self, $maximum_x, $maximum_y) = @_;
-
-	$self -> log("Entered create_image($maximum_x, $maximum_y)");
-
 	my($image) = Image::Magick -> new(size => "$maximum_x x $maximum_y");
 
 	$image -> Read('canvas:white');
@@ -143,8 +126,6 @@ sub create_image
 				strokewidth	=> 1,
 			);
 	}
-
-	$self -> log('Leaving create_image()');
 
 	return $image;
 
@@ -213,29 +194,19 @@ sub draw_leaf_name
 sub draw_root_branch
 {
 	my($self, $image)			= @_;
-
-=pod
-
-	my($branch_color)			= $self -> branch_color;
 	my($branch_width)			= $self -> branch_width - 1;
 	my($attributes)				= $self -> root -> attributes;
 	my(@daughters)				= $self -> root -> daughters;
 	my($daughter_attributes)	= $daughters[0] -> attributes;
-
-	$image -> box
-	(
-		box =>
-		[
-			$$daughter_attributes{x},
-			$$daughter_attributes{y},
-			$self -> left_margin,
-			$$attributes{y} + $branch_width,
-		],
-		color	=> $branch_color,
-		filled	=> 1,
-	);
-
-=cut
+	my(@x)						= ($$daughter_attributes{x}, $self -> left_margin);
+	my(@y)						= ($$daughter_attributes{y}, $$attributes{y} + $branch_width);
+	my($result)					= $image -> Draw
+									(
+										fill		=> $self -> branch_color,
+										method		=> 'replace',
+										points		=> "$x[0],$y[0] $x[1],$y[1]",
+										primitive	=> 'rectangle',
+									);
 
 } # End of draw_root_branch.
 
@@ -268,26 +239,17 @@ sub draw_title
 sub draw_vertical_branch
 {
 	my($self, $image, $middle_attributes, $daughter_attributes) = @_;
-
-=pod
-
-	my($branch_color)	= $self -> branch_color;
 	my($branch_width)	= $self -> branch_width - 1;
-
-	$image -> box
-	(
-		box =>
-		[
-			$$middle_attributes{x},
-			$$middle_attributes{y},
-			$$middle_attributes{x} + $branch_width,
-			$$daughter_attributes{y},
-		],
-		color	=> $branch_color,
-		filled	=> 1,
-	);
-
-=cut
+	my($x_step)			= $self -> x_step;
+	my(@x)				= ($$middle_attributes{x}, $$middle_attributes{x} + $branch_width);
+	my(@y)				= ($$middle_attributes{y}, $$daughter_attributes{y});
+	my($result)			= $image -> Draw
+							(
+								fill		=> $self -> branch_color,
+								method		=> 'replace',
+								points		=> "$x[0],$y[0] $x[1],$y[1]",
+								primitive	=> 'rectangle',
+							);
 
 } # End of draw_vertical_branch.
 
