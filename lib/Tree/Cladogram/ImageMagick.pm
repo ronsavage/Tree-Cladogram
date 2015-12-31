@@ -156,26 +156,28 @@ sub draw_leaf_name
 {
 	my($self, $image, $name, $daughter_attributes, $final_offset) = @_;
 
-=pod
-
 	if ( (length($name) > 0) && ($name !~ /^\d+$/) )
 	{
-		my($bounds) 	= $$daughter_attributes{bounds};
-		$$bounds[0]		+= $final_offset;
-		$$bounds[2]		+= $final_offset;
-		my($fuschia)	= Imager::Color -> new(0xff, 0, 0xff);
+		my($bounds) = $$daughter_attributes{bounds};
+		$$bounds[0]	+= $final_offset;
+		$$bounds[2]	+= $final_offset;
 
-		$image -> string
+		$image -> Annotate
 		(
-			align	=> 0,
-			font	=> $self -> leaf_font,
-			string	=> $name,
-			x		=> $$bounds[0],
-			y		=> $$bounds[1],
+			font		=> $self -> leaf_font_file,
+			gravity		=> 'west',
+			pointsize	=> $self -> leaf_font_size,
+			stroke		=> $self -> leaf_font_color,
+			strokewidth	=> 1,
+			text		=> $name,
+			x			=> $$bounds[0],
+			y			=> $$bounds[1],
 		);
 
 		if ($self -> debug && 0)
 		{
+			my($fuschia) = 'fuschia'; # Imager::Color -> new(0xff, 0, 0xff);
+
 			$image -> box
 			(
 				box		=> $bounds,
@@ -184,8 +186,6 @@ sub draw_leaf_name
 			);
 		}
 	}
-
-=cut
 
 } # End of draw_leaf_name.
 

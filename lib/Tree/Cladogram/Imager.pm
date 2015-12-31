@@ -162,10 +162,9 @@ sub draw_leaf_name
 
 	if ( (length($name) > 0) && ($name !~ /^\d+$/) )
 	{
-		my($bounds) 	= $$daughter_attributes{bounds};
-		$$bounds[0]		+= $final_offset;
-		$$bounds[2]		+= $final_offset;
-		my($fuschia)	= Imager::Color -> new(0xff, 0, 0xff);
+		my($bounds) = $$daughter_attributes{bounds};
+		$$bounds[0]	+= $final_offset;
+		$$bounds[2]	+= $final_offset;
 
 		$image -> string
 		(
@@ -178,6 +177,8 @@ sub draw_leaf_name
 
 		if ($self -> debug && 0)
 		{
+			my($fuschia) = Imager::Color -> new(0xff, 0, 0xff);
+
 			$image -> box
 			(
 				box		=> $bounds,
