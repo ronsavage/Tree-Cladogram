@@ -90,6 +90,8 @@ echo Font: $LEAF_FONT_FILE
 
 for i in nationalgeographic wikipedia; do
 
+	echo Processing data/$i.01.png
+
 	rm -rf data/$i.01.png $DR/misc/$i.01.png
 
 	if [ "$i" == "wikipedia" ]; then

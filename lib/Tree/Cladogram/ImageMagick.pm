@@ -39,7 +39,8 @@ sub BUILD
 sub _calculate_leaf_name_bounds
 {
 	my($self)			= @_;
-	my($image)			= Image::Magick -> new;
+	my($image)			= Image::Magick -> new(size => '1 x 1');
+	my($result)			= $image -> Read('canvas:white');
 	my($leaf_font_size)	= $self -> leaf_font_size;
 	my($x_step)			= $self -> x_step;
 
