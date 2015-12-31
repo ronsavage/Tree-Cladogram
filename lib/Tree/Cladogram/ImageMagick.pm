@@ -45,6 +45,7 @@ sub _calculate_leaf_name_bounds
 	my($x_step)			= $self -> x_step;
 
 	my($attributes);
+	my(@bounds);
 	my(@metrics);
 	my($x);
 	my($y);
@@ -55,18 +56,25 @@ sub _calculate_leaf_name_bounds
 		sub
 		{
 			my($node)		= @_;
-			$attributes		= $node -> attributes;
-			$x				= $$attributes{x} + $x_step + 4;
-			$y				= $$attributes{y} + int($leaf_font_size / 2);
 			my(@metrics)	= $image -> QueryFontMetrics
 								(
 									font		=> $self -> leaf_font_file,
 									pointsize	=> $self -> leaf_font_size,
 									text		=> $node -> name,
-									x			=> $x,
-									y			=> $y,
+									x			=> 0,
+									y			=> 0,
 								);
-			$$attributes{bounds} = [$x, $y, $metrics[11] + 1, $metrics[5] ];
+			$attributes				= $node -> attributes;
+			$x						= $$attributes{x} + $x_step + 4;
+			$y						= $$attributes{y} + int($leaf_font_size / 2);
+			@bounds					= ($x, $y, $x + $metrics[11] + 1, $y + $metrics[5]);
+			$$attributes{bounds}	= [@bounds];
+
+			$self -> log('Leaf ' . $node -> name
+				. '. Bounds ('
+				. $metrics[0] . ', ' . $metrics[1] . ') .. ('
+				. $metrics[2] . ', ' . $metrics[2] . ')'
+			);
 
 			$node -> attributes($attributes);
 
@@ -111,7 +119,7 @@ sub create_image
 {
 	my($self, $maximum_x, $maximum_y) = @_;
 
-	$self -> log('Entered create_image()');
+	$self -> log("Entered create_image($maximum_x, $maximum_y)");
 
 	my($image) = Image::Magick -> new(size => "$maximum_x x $maximum_y");
 
@@ -147,27 +155,17 @@ sub create_image
 sub draw_horizontal_branch
 {
 	my($self, $image, $middle_attributes, $daughter_attributes, $final_offset) = @_;
-
-=pod
-
-	my($branch_color)	= $self -> branch_color;
 	my($branch_width)	= $self -> branch_width - 1;
 	my($x_step)			= $self -> x_step;
-
-	$image -> box
-	(
-		box =>
-		[
-			$$middle_attributes{x},
-			$$daughter_attributes{y},
-			$$daughter_attributes{x} + $x_step + $final_offset,
-			$$daughter_attributes{y} + $branch_width,
-		],
-		color	=> $branch_color,
-		filled	=> 1,
-	);
-
-=cut
+	my(@x)				= ($$middle_attributes{x}, $$daughter_attributes{x} + $x_step + $final_offset);
+	my(@y)				= ($$daughter_attributes{y}, $$daughter_attributes{y} + $branch_width);
+	my($result)			= $image -> Draw
+							(
+								fill		=> $self -> branch_color,
+								method		=> 'replace',
+								points		=> "$x[0],$y[0] $x[1],$y[1]",
+								primitive	=> 'rectangle',
+							);
 
 } # End of draw_horizontal_branch.
 
@@ -292,6 +290,17 @@ sub draw_vertical_branch
 =cut
 
 } # End of draw_vertical_branch.
+
+# ------------------------------------------------
+
+sub write
+{
+	my($self, $image, $file_name) = @_;
+
+	$image -> Write($file_name);
+	$self -> log('Wrote ' . $file_name);
+
+} # End of write.
 
 # ------------------------------------------------
 

@@ -113,7 +113,11 @@ for i in nationalgeographic wikipedia; do
 		-title "$TITLE" \
 		-title_font_file $TITLE_FONT_FILE
 
+	echo -n 'Calling identify ... '
+
 	identify data/$i.01.png
 
 	cp data/$i.01.png $DR/misc
+
+	echo
 done

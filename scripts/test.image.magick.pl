@@ -88,7 +88,22 @@ origin_y
 
 print "Title metrics: \n", join("\n", map{"$_: $metric_label[$_]: $metrics[$_]"} 0 .. $#metrics), ". \n";
 
-# Put the title in the center.
+# Put a rectangle across the middle.
+
+@x = (100, ($maximum_x - 100) );
+@y = (30, 40);
+
+$result = $image -> Draw
+			(
+				fill		=> 'green',
+				method		=> 'replace',
+				points		=> "$x[0],$y[0] $x[1],$y[1]",
+				primitive	=> 'rectangle',
+			);
+
+die $result if $result;
+
+# Put the title in the bottom-center.
 
 my($title_x)	= int( ($maximum_x - $metrics[4]) / 2);
 my($title_y)	= int( ($maximum_y - $font_size) / 2);

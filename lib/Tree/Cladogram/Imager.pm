@@ -85,6 +85,12 @@ sub _calculate_leaf_name_bounds
 							);
 			$$attributes{bounds} = [@bounds];
 
+			$self -> log('Leaf ' . $node -> name
+				. '. Bounds ('
+				. $bounds[0] . ', ' . $bounds[1] . ') .. ('
+				. $bounds[2] . ', ' . $bounds[2] . ')'
+			);
+
 			$node -> attributes($attributes);
 
 			return 1; # Keep walking.
@@ -123,7 +129,7 @@ sub create_image
 {
 	my($self, $maximum_x, $maximum_y) = @_;
 
-	$self -> log('Entered create_image()');
+	$self -> log("Entered create_image($maximum_x, $maximum_y)");
 
 	my($image)			= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
 	my($frame_color)	= Imager::Color -> new($self -> frame_color);
@@ -267,6 +273,17 @@ sub draw_vertical_branch
 	);
 
 } # End of draw_vertical_branch.
+
+# ------------------------------------------------
+
+sub write
+{
+	my($self, $image, $file_name) = @_;
+
+	$image -> write(file => $file_name);
+	$self -> log('Wrote ' . $file_name);
+
+} # End of write.
 
 # ------------------------------------------------
 

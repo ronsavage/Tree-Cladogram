@@ -473,11 +473,7 @@ sub draw_image
 
 	my($output_file) = $self -> output_file;
 
-	if (length($output_file) )
-	{
-		$image -> write(file => $output_file);
-		$self -> log('Wrote ' . $output_file);
-	}
+	$self -> write($image, $output_file) if (length($output_file) );
 
 } # End of draw_image.
 
