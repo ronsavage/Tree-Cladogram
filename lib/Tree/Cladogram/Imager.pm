@@ -54,8 +54,6 @@ sub BUILD
 		) || die "Error. Can't define title font: " . Imager -> errstr
 	);
 
-	$self -> _calculate_title_metrics;
-
 } # End of BUILD.
 
 # ------------------------------------------------
@@ -100,25 +98,22 @@ sub _calculate_leaf_name_bounds
 
 sub _calculate_title_metrics
 {
-	my($self) = @_;
+	my($self, $image)	= @_;
+	my(@metrics)		= $self -> title_font -> align
+							(
+								halign	=> 'left',
+								image	=> undef,
+								string	=> $self -> title,
+								valign	=> 'baseline',
+								x		=> 0,
+								y		=> 0,
+							);
 
-	if (length($self -> title) )
-	{
-		my(@metrics) = $self -> title_font -> align
-						(
-							halign	=> 'left',
-							image	=> undef,
-							string	=> $self -> title,
-							valign	=> 'baseline',
-							x		=> 0,
-							y		=> 0,
-						);
+	$self -> title_width($metrics[2] + 1);
 
-		$self -> title_width($metrics[2]);
-
-		print "Title metrics: \n", join("\n", map{"$_: $metrics[$_]"} 0 .. $#metrics), ". \n";
-		print "Title width:   $metrics[2]. \n";
-	}
+	$self -> log('Title metrics:');
+	$self -> log($_) for map{"$_: $metrics[$_]"} 0 .. $#metrics;
+	$self -> log("Title width: $metrics[2] + 1");
 
 } # End of _calculate_title_metrics.
 
@@ -128,12 +123,17 @@ sub create_image
 {
 	my($self, $maximum_x, $maximum_y) = @_;
 
+	$self -> log('Entered create_image()');
+
 	my($image)			= Imager -> new(xsize => $maximum_x, ysize => $maximum_y);
 	my($frame_color)	= Imager::Color -> new($self -> frame_color);
 	my($white)			= Imager::Color -> new(255, 255, 255);
 
 	$image -> box(color => $white, filled => 1);
+	$self -> _calculate_title_metrics($image, $maximum_x, $maximum_y) if (length($self -> title) );
 	$image -> box(color => $frame_color) if ($self -> draw_frame);
+
+	$self -> log('Leaving create_image()');
 
 	return $image;
 
@@ -233,22 +233,12 @@ sub draw_title
 
 	if (length($title) > 0)
 	{
-		my(@bounds) = $self -> title_font -> align
-						(
-							halign	=> 'left',
-							image	=> undef,
-							string	=> $title,
-							valign	=> 'baseline',
-							x		=> 0,
-							y		=> 0,
-						);
-
 		$image -> string
 		(
 			align	=> 0,
 			font	=> $self -> title_font,
 			string	=> $title,
-			x		=> int( ($maximum_x - $bounds[2]) / 2),
+			x		=> int( ($maximum_x - $self -> title_width) / 2),
 			y		=> $maximum_y - $self -> top_margin,
 		);
 	}

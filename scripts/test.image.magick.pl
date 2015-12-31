@@ -11,8 +11,9 @@ use Image::Magick;
 # ----------------
 
 my($out_file_name)	= shift || die "Usage: $0 output_file_name \n";
-my($font_file)		= 'data/gothic.ttf';
+my($font_file)		= '/usr/local/share/fonts/truetype/gothic.ttf';
 my($font_size)		= 16;
+my($frame_color)	= 'purple';
 my($title)			= 'The diversity of hesperornithiforms. From Bell and Chiappe, 2015';
 my($maximum_x)		= 1000;
 my($maximum_y)		= 100;
@@ -26,7 +27,7 @@ my($maximum_y)		= 100;
 # o new(size => "${maximum_x}x$maximum_y") does work.
 # o new() and Set(size => "${maximum_x}x$maximum_y") does work.
 
-my($image) = Image::Magick -> new(size => "${maximum_x}x$maximum_y");
+my($image) = Image::Magick -> new(size => "$maximum_x x $maximum_y");
 
 print "Created image of size ($maximum_x, $maximum_y). \n";
 
@@ -44,29 +45,30 @@ die $result if $result;
 
 #$result = $image -> Border(geometry => '2x2', fill => 'purple');
 
+my(@x) = (0, ($maximum_x - 1), ($maximum_x - 1), 0);
+my(@y) = (0, 0, ($maximum_y - 1), ($maximum_y - 1) );
+
 $result = $image -> Draw
-					(
-						fill		=> 'none',
-						primitive	=> 'polyline',
-						points		=> '0,0 999,0 999,999 0,999 0,0',
-						stroke		=> 'purple',
-						strokewidth	=> 2,
-					);
+			(
+				fill		=> 'none',
+				primitive	=> 'polyline',
+				points		=> "$x[0],$y[0] $x[1],$y[1] $x[2],$y[2] $x[3],$y[3] $x[0],$y[0]",
+				stroke		=> $frame_color,
+				strokewidth	=> 2,
+			);
 
 die $result if $result;
 
 print "Annotating with font $font_file. \n";
 
 my(@metrics) = $image -> QueryFontMetrics
-					(
-						font		=> $font_file,
-						pointsize	=> $font_size,
-						stroke		=> 'blue',
-						strokewidth	=> 1,
-						text		=> $title,
-						x			=> 0,
-						y			=> 0,
-					);
+				(
+					font		=> $font_file,
+					pointsize	=> $font_size,
+					text		=> $title,
+					x			=> 0,
+					y			=> 0,
+				);
 
 my(@metric_label) = (qw/
 character_width

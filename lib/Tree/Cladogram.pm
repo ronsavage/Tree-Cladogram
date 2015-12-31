@@ -734,7 +734,7 @@ sub run
 	$self -> _check_for_overlap;
 	$self -> find_maximum_x;
 	$self -> find_maximum_y;
-#	$self -> draw_image;
+	$self -> draw_image;
 
 	$self -> log(join('', map("$_\n", @{$self -> root -> tree2string}) ) ) if ($self -> print_tree);
 

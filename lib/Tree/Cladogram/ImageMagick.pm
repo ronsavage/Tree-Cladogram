@@ -6,7 +6,23 @@ use Image::Magick;
 
 use Moo;
 
-use Types::Standard qw/Any Int Str/;
+use Types::Standard qw/Int/;
+
+has title_x =>
+(
+	default  => sub{return 0},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
+has title_y =>
+(
+	default  => sub{return 0},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
 
 our $VERSION = '1.00';
 
@@ -15,8 +31,6 @@ our $VERSION = '1.00';
 sub BUILD
 {
 	my($self) = @_;
-
-	$self -> _calculate_title_metrics;
 
 } # End of BUILD.
 
@@ -47,8 +61,6 @@ sub _calculate_leaf_name_bounds
 								x			=> $$attributes{x} + $x_step + 4,
 								y			=> $$attributes{y} + int($leaf_font_size / 2),
 							);
-			print 'Leaf metrics (', $node -> name, ') ', join("\n", map{"$_: $metrics[$_]"} 0 .. $#metrics), ". \n";
-
 			$$attributes{bounds} = [@metrics[7 .. 10] ];
 
 			$node -> attributes($attributes);
@@ -64,25 +76,27 @@ sub _calculate_leaf_name_bounds
 
 sub _calculate_title_metrics
 {
-	my($self) = @_;
+	my($self, $image, $maximum_x, $maximum_y) = @_;
 
-	if (length($self -> title) )
-	{
-		my($image)		= Image::Magick -> new;
-		my(@metrics)	= $image -> QueryFontMetrics
-							(
-								font		=> $self -> leaf_font_file,
-								pointsize	=> $self -> leaf_font_size,
-								text		=> $self -> title,
-								x			=> 0,
-								y			=> 0,
-							);
+	$self -> log('Entered _calculate_title_metrics()');
 
-		$self -> title_width($metrics[4] || 0);
+	my(@metrics) = $image -> QueryFontMetrics
+					(
+						font		=> $self -> title_font_file,
+						pointsize	=> $self -> title_font_size,
+						text		=> $self -> title,
+						x			=> 0,
+						y			=> 0,
+					);
 
-		print "Title metrics: \n", join("\n", map{"$_: $metrics[$_]"} 0 .. $#metrics), ". \n";
-		print "Title width:   $metrics[4]. \n";
-	}
+	$self -> title_width($metrics[4] + 1);
+	$self -> title_x(int( ($maximum_x - $metrics[4]) / 2) );
+	$self -> title_y(int( ($maximum_y - $self -> leaf_font_size) / 2) );
+
+	$self -> log('Title metrics:');
+	$self -> log($_) for map{"$_: $metrics[$_]"} 0 .. $#metrics;
+	$self -> log("Title width: $metrics[4] + 1");
+	$self -> log('Leaving _calculate_title_metrics()');
 
 } # End of _calculate_title_metrics.
 
@@ -91,10 +105,33 @@ sub _calculate_title_metrics
 sub create_image
 {
 	my($self, $maximum_x, $maximum_y) = @_;
-	my($image) = Image::Magick -> new(width => 1, height => 1);
+
+	$self -> log('Entered create_image()');
+
+	my($image) = Image::Magick -> new(size => "$maximum_x x $maximum_y");
 
 	$image -> Read('canvas:white');
-	$image -> Frame(fill => $self -> frame_color, width => 1, height => 1) if ($self -> draw_frame);
+	$self -> _calculate_title_metrics($image, $maximum_x, $maximum_y) if (length($self -> title) );
+
+	if ($self -> draw_frame)
+	{
+		# The advantage of Draw over Border is that the former
+		# draws /on/ the image, thereby not making it larger.
+
+		my(@x) = (0, ($maximum_x - 1), ($maximum_x - 1), 0);
+		my(@y) = (0, 0, ($maximum_y - 1), ($maximum_y - 1) );
+
+		$image -> Draw
+			(
+				fill		=> 'none',
+				primitive	=> 'polyline',
+				points		=> "$x[0],$y[0] $x[1],$y[1] $x[2],$y[2] $x[3],$y[3] $x[0],$y[0]",
+				stroke		=> $self -> frame_color,
+				strokewidth	=> 1,
+			);
+	}
+
+	$self -> log('Leaving create_image()');
 
 	return $image;
 
@@ -208,22 +245,16 @@ sub draw_title
 
 	if (length($title) > 0)
 	{
-		my(@metrics) = $image -> QueryFontMetrics
-						(
-							font		=> $self -> leaf_font_file,
-							pointsize	=> $self -> leaf_font_size,
-							text		=> $title,
-							x			=> 0,
-							y			=> 0,
-						);
-
 		$image -> Annotate
 		(
-			font		=> $self -> leaf_font_file,
-			pointsize	=> $self -> leaf_font_size,
+			font		=> $self -> title_font_file,
+			gravity		=> 'west',
+			pointsize	=> $self -> title_font_size,
+			stroke		=> $self -> title_font_color,
+			strokewidth	=> 1,
 			text		=> $title,
-			x			=> int( ($maximum_x - $metrics[4]) / 2),
-			y			=> $maximum_y - $self -> top_margin,
+			x			=> $self -> title_x,
+			y			=> $self -> title_y,
 		);
 	}
 
