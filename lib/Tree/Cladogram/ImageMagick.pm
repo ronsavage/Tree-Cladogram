@@ -8,22 +8,6 @@ use Moo;
 
 use Types::Standard qw/Any Int Str/;
 
-has leaf_font =>
-(
-	default  => sub{return ''},
-	is       => 'rw',
-	isa      => Any,
-	required => 0,
-);
-
-has title_font =>
-(
-	default  => sub{return ''},
-	is       => 'rw',
-	isa      => Any,
-	required => 0,
-);
-
 our $VERSION = '1.00';
 
 # ------------------------------------------------
@@ -32,54 +16,82 @@ sub BUILD
 {
 	my($self) = @_;
 
-=pod
+	$self -> _calculate_title_metrics;
 
-	$self -> leaf_font
-	(
-		Imager::Font -> new
-		(
-			color	=> Imager::Color -> new($self -> leaf_font_color),
-			file	=> $self -> leaf_font_file,
-			size	=> $self -> leaf_font_size,
-			utf8	=> 1
-		) || die "Error. Can't define leaf font: " . Imager -> errstr
-	);
-	$self -> title_font
-	(
-		Imager::Font -> new
-		(
-			color	=> Imager::Color -> new($self -> title_font_color),
-			file	=> $self -> title_font_file,
-			size	=> $self -> title_font_size,
-			utf8	=> 1
-		) || die "Error. Can't define title font: " . Imager -> errstr
-	);
+} # End of BUILD.
+
+# ------------------------------------------------
+
+sub _calculate_leaf_name_bounds
+{
+	my($self)			= @_;
+	my($image)			= Image::Magick -> new;
+	my($leaf_font_size)	= $self -> leaf_font_size;
+	my($x_step)			= $self -> x_step;
+
+	my($attributes);
+	my(@metrics);
+
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node)		= @_;
+			$attributes		= $node -> attributes;
+			my(@metrics)	= $image -> QueryFontMetrics
+							(
+								font		=> $self -> leaf_font_file,
+								pointsize	=> $self -> leaf_font_size,
+								text		=> $node -> name,
+								x			=> $$attributes{x} + $x_step + 4,
+								y			=> $$attributes{y} + int($leaf_font_size / 2),
+							);
+			print 'Leaf metrics (', $node -> name, ') ', join("\n", map{"$_: $metrics[$_]"} 0 .. $#metrics), ". \n";
+
+			$$attributes{bounds} = [@metrics[7 .. 10] ];
+
+			$node -> attributes($attributes);
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+} # End of _calculate_leaf_name_bounds.
+
+# ------------------------------------------------
+
+sub _calculate_title_metrics
+{
+	my($self) = @_;
 
 	if (length($self -> title) )
 	{
-		my(@bounds) = $self -> title_font -> align
-						(
-							halign	=> 'left',
-							image	=> undef,
-							string	=> $self -> title,
-							valign	=> 'baseline',
-							x		=> 0,
-							y		=> 0,
-						);
+		my($image)		= Image::Magick -> new;
+		my(@metrics)	= $image -> QueryFontMetrics
+							(
+								font		=> $self -> leaf_font_file,
+								pointsize	=> $self -> leaf_font_size,
+								text		=> $self -> title,
+								x			=> 0,
+								y			=> 0,
+							);
 
-		$self -> title_width($bounds[2]);
+		$self -> title_width($metrics[4] || 0);
+
+		print "Title metrics: \n", join("\n", map{"$_: $metrics[$_]"} 0 .. $#metrics), ". \n";
+		print "Title width:   $metrics[4]. \n";
 	}
 
-=cut
-
-} # End of BUILD.
+} # End of _calculate_title_metrics.
 
 # ------------------------------------------------
 
 sub create_image
 {
 	my($self, $maximum_x, $maximum_y) = @_;
-	my($image)			= Imager -> new(width => $maximum_x, height => $maximum_y);
+	my($image) = Image::Magick -> new(width => 1, height => 1);
 
 	$image -> Read('canvas:white');
 	$image -> Frame(fill => $self -> frame_color, width => 1, height => 1) if ($self -> draw_frame);
@@ -198,8 +210,8 @@ sub draw_title
 	{
 		my(@metrics) = $image -> QueryFontMetrics
 						(
-							font		= $self -> leaf_font_file,
-							pointsize	= $self -> leaf_font_size,
+							font		=> $self -> leaf_font_file,
+							pointsize	=> $self -> leaf_font_size,
 							text		=> $title,
 							x			=> 0,
 							y			=> 0,
@@ -207,10 +219,10 @@ sub draw_title
 
 		$image -> Annotate
 		(
-			font		= $self -> leaf_font_file,
-			pointsize	= $self -> leaf_font_size,
+			font		=> $self -> leaf_font_file,
+			pointsize	=> $self -> leaf_font_size,
 			text		=> $title,
-			x			=> int( ($maximum_x - $bounds[4]) / 2),
+			x			=> int( ($maximum_x - $metrics[4]) / 2),
 			y			=> $maximum_y - $self -> top_margin,
 		);
 	}
@@ -244,49 +256,6 @@ sub draw_vertical_branch
 =cut
 
 } # End of draw_vertical_branch.
-
-# ------------------------------------------------
-
-sub _calculate_leaf_name_bounds
-{
-	my($self)			= @_;
-
-=pod
-
-	my($leaf_font_size)	= $self -> leaf_font_size;
-	my($x_step)			= $self -> x_step;
-
-	my($attributes);
-	my(@bounds);
-
-	$self -> root -> walk_down
-	({
-		callback =>
-		sub
-		{
-			my($node)	= @_;
-			$attributes	= $node -> attributes;
-			@bounds		= $self -> leaf_font -> align
-							(
-								halign	=> 'left',
-								image	=> undef,
-								string	=> $node -> name,
-								valign	=> 'baseline',
-								x		=> $$attributes{x} + $x_step + 4,
-								y		=> $$attributes{y} + int($leaf_font_size / 2),
-							);
-			$$attributes{bounds} = [@bounds];
-
-			$node -> attributes($attributes);
-
-			return 1; # Keep walking.
-		},
-		_depth	=> 0,
-	});
-
-=cut
-
-} # End of _calculate_leaf_name_bounds.
 
 # ------------------------------------------------
 

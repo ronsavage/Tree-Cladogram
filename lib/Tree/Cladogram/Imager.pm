@@ -54,9 +54,57 @@ sub BUILD
 		) || die "Error. Can't define title font: " . Imager -> errstr
 	);
 
+	$self -> _calculate_title_metrics;
+
+} # End of BUILD.
+
+# ------------------------------------------------
+
+sub _calculate_leaf_name_bounds
+{
+	my($self)			= @_;
+	my($leaf_font_size)	= $self -> leaf_font_size;
+	my($x_step)			= $self -> x_step;
+
+	my($attributes);
+	my(@bounds);
+
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node)	= @_;
+			$attributes	= $node -> attributes;
+			@bounds		= $self -> leaf_font -> align
+							(
+								halign	=> 'left',
+								image	=> undef,
+								string	=> $node -> name,
+								valign	=> 'baseline',
+								x		=> $$attributes{x} + $x_step + 4,
+								y		=> $$attributes{y} + int($leaf_font_size / 2),
+							);
+			$$attributes{bounds} = [@bounds];
+
+			$node -> attributes($attributes);
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+} # End of _calculate_leaf_name_bounds.
+
+# ------------------------------------------------
+
+sub _calculate_title_metrics
+{
+	my($self) = @_;
+
 	if (length($self -> title) )
 	{
-		my(@bounds) = $self -> title_font -> align
+		my(@metrics) = $self -> title_font -> align
 						(
 							halign	=> 'left',
 							image	=> undef,
@@ -66,10 +114,13 @@ sub BUILD
 							y		=> 0,
 						);
 
-		$self -> title_width($bounds[2]);
+		$self -> title_width($metrics[2]);
+
+		print "Title metrics: \n", join("\n", map{"$_: $metrics[$_]"} 0 .. $#metrics), ". \n";
+		print "Title width:   $metrics[2]. \n";
 	}
 
-} # End of BUILD.
+} # End of _calculate_title_metrics.
 
 # ------------------------------------------------
 
@@ -226,44 +277,6 @@ sub draw_vertical_branch
 	);
 
 } # End of draw_vertical_branch.
-
-# ------------------------------------------------
-
-sub _calculate_leaf_name_bounds
-{
-	my($self)			= @_;
-	my($leaf_font_size)	= $self -> leaf_font_size;
-	my($x_step)			= $self -> x_step;
-
-	my($attributes);
-	my(@bounds);
-
-	$self -> root -> walk_down
-	({
-		callback =>
-		sub
-		{
-			my($node)	= @_;
-			$attributes	= $node -> attributes;
-			@bounds		= $self -> leaf_font -> align
-							(
-								halign	=> 'left',
-								image	=> undef,
-								string	=> $node -> name,
-								valign	=> 'baseline',
-								x		=> $$attributes{x} + $x_step + 4,
-								y		=> $$attributes{y} + int($leaf_font_size / 2),
-							);
-			$$attributes{bounds} = [@bounds];
-
-			$node -> attributes($attributes);
-
-			return 1; # Keep walking.
-		},
-		_depth	=> 0,
-	});
-
-} # End of _calculate_leaf_name_bounds.
 
 # ------------------------------------------------
 

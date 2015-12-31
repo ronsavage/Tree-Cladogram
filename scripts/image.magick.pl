@@ -7,7 +7,7 @@ use Getopt::Long;
 
 use Pod::Usage;
 
-use Tree::Cladogram::Imager;
+use Tree::Cladogram::ImageMagick;
 
 # ----------------------------------------------
 
@@ -43,7 +43,7 @@ if ($option_parser -> getoptions
 {
 	pod2usage(1) if ($option{'help'});
 
-	exit Tree::Cladogram::Imager -> new(%option) -> run;
+	exit Tree::Cladogram::ImageMagick -> new(%option) -> run;
 }
 else
 {
@@ -56,15 +56,15 @@ __END__
 
 =head1 NAME
 
-plot.pl - Read input text file and write cladogram image file
+image.magick.pl - Read input text file and write cladogram image file using Image::Magick
 
 =head1 DESCRIPTION
 
-plt.pl plots a cladogram.
+image.magick.pl plots a cladogram.
 
 =head1 SYNOPSIS
 
-plot.pl [options]
+image.magick.pl [options]
 
 	Options:
 	-branch_color  $string

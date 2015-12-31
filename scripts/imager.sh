@@ -102,7 +102,7 @@ for i in nationalgeographic wikipedia; do
 
 	#echo $NAME.01.clad
 
-	perl -Ilib scripts/plot.pl \
+	perl -Ilib scripts/imager.pl \
 		-debug 1 \
 		-draw_frame $FRAME \
 		-input_file data/$i.01.clad \
