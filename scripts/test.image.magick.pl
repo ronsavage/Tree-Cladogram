@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
 
-use 5.018;
 use strict;
 use warnings;
 
@@ -13,21 +12,27 @@ my($font_file)		= '/usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf';
 #$font_file			= '/usr/local/share/fonts/truetype/gothic.ttf';
 my($font_size)		= 16;
 my($title)			= 'The diversity of hesperornithiforms. From Bell and Chiappe, 2015';
-my($image)			= Image::Magick -> new(width => 1000, height => 100);
+my($width)			= 1000;
+my($height)			= 50;
+my($image)			= Image::Magick -> new(width => $width, height => $height);
+my($result)			= $image -> Read('canvas:white');
 
-$image -> Read('canvas:white');
+die $result if $result;
+
+print "Created image of size ($width, $height). \n";
+
 #$image -> Frame(fill => 'blue', width => 1, height => 1);
 
-my($result) = $image -> Annotate
-				(
-					font		=> $font_file,
-					pointsize	=> $font_size,
-					stroke		=> 'blue',
-					strokewidth	=> 1,
-					text		=> $title,
-					x			=> 20,
-					y			=> 20,
-				);
+$result = $image -> Annotate
+			(
+				font		=> $font_file,
+				pointsize	=> $font_size,
+				stroke		=> 'blue',
+				strokewidth	=> 3,
+				text		=> $title,
+				x			=> 20,
+				y			=> 20,
+			);
 
 die $result if $result;
 
@@ -58,8 +63,8 @@ origin_x
 origin_y
 /);
 
-print "Title metrics: \n", join("\n", map{"$metric_label[$_]: $metrics[$_]"} 0 .. $#metrics), ". \n";
+print "Title metrics: \n", join("\n", map{"$_: $metric_label[$_]: $metrics[$_]"} 0 .. $#metrics), ". \n";
 
-my($count)			= $image -> Write($out_file_name);
+my($count) = $image -> Write($out_file_name);
 
-say "Wrote $out_file_name";
+print "Wrote $out_file_name. \n";
