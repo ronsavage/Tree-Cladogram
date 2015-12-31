@@ -11,15 +11,13 @@ use Image::Magick;
 # ----------------
 
 my($out_file_name)	= shift || die "Usage: $0 output_file_name \n";
-my($font_file)		= '/usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf';
-#$font_file			= '/usr/local/share/fonts/truetype/gothic.ttf';
-$font_file			= '/usr/share/fonts/truetype/ttf-liberation/LiberationMono.ttf';
+my($font_file)		= 'data/gothic.ttf';
 my($font_size)		= 16;
 my($title)			= 'The diversity of hesperornithiforms. From Bell and Chiappe, 2015';
 my($maximum_x)		= 1000;
 my($maximum_y)		= 100;
 
-# Warnings:
+# Warning:
 # o new(geometry => "${maximum_x}x$maximum_y") does not work.
 # o new(width => $maximum_x, height => $maximum_y) does not work.
 # o new() and Set(geometry => "${maximum_x}x$maximum_y") does not work.
@@ -35,7 +33,7 @@ print "Created image of size ($maximum_x, $maximum_y). \n";
 # Warning:
 # The following line is mandatory before the code below will work.
 # Of course, the color does not have to be white.
-# Without this line, the image has a size of (0, 0) or, probably, (1, 1).
+# Without this line, the image has a size of (0, 0) or, perhaps, (1, 1).
 
 my($result) = $image -> Read('canvas:white');
 
@@ -56,6 +54,8 @@ $result = $image -> Draw
 					);
 
 die $result if $result;
+
+print "Annotating with font $font_file. \n";
 
 my(@metrics) = $image -> QueryFontMetrics
 					(
