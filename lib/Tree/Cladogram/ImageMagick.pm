@@ -45,6 +45,8 @@ sub _calculate_leaf_name_bounds
 
 	my($attributes);
 	my(@metrics);
+	my($x);
+	my($y);
 
 	$self -> root -> walk_down
 	({
@@ -53,15 +55,17 @@ sub _calculate_leaf_name_bounds
 		{
 			my($node)		= @_;
 			$attributes		= $node -> attributes;
+			$x				= $$attributes{x} + $x_step + 4;
+			$y				= $$attributes{y} + int($leaf_font_size / 2);
 			my(@metrics)	= $image -> QueryFontMetrics
-							(
-								font		=> $self -> leaf_font_file,
-								pointsize	=> $self -> leaf_font_size,
-								text		=> $node -> name,
-								x			=> $$attributes{x} + $x_step + 4,
-								y			=> $$attributes{y} + int($leaf_font_size / 2),
-							);
-			$$attributes{bounds} = [@metrics[7 .. 10] ];
+								(
+									font		=> $self -> leaf_font_file,
+									pointsize	=> $self -> leaf_font_size,
+									text		=> $node -> name,
+									x			=> $x,
+									y			=> $y,
+								);
+			$$attributes{bounds} = [$x, $y, $metrics[11] + 1, $metrics[5] ];
 
 			$node -> attributes($attributes);
 
@@ -89,13 +93,13 @@ sub _calculate_title_metrics
 						y			=> 0,
 					);
 
-	$self -> title_width($metrics[4] + 1);
-	$self -> title_x(int( ($maximum_x - $metrics[4]) / 2) );
+	$self -> title_width($metrics[11] + 1);
+	$self -> title_x(int( ($maximum_x - $metrics[11]) / 2) );
 	$self -> title_y(int( ($maximum_y - $self -> leaf_font_size) / 2) );
 
 	$self -> log('Title metrics:');
 	$self -> log($_) for map{"$_: $metrics[$_]"} 0 .. $#metrics;
-	$self -> log("Title width: $metrics[4] + 1");
+	$self -> log("Title width: $metrics[11] + 1");
 	$self -> log('Leaving _calculate_title_metrics()');
 
 } # End of _calculate_title_metrics.
