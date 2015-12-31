@@ -1,7 +1,5 @@
 #!/bin/bash
-#
-# Warning: This is a copy of imager.pl and has not been tested with any fonts.
-#
+
 # Great.
 
 LEAF_FONT_FILE=/usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf

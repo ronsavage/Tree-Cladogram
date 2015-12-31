@@ -1311,7 +1311,7 @@ My default install of L<Imager> lists:
 	pnm
 	raw
 
-=head2 What font formats are supported?
+=head2 What fonts are supported?
 
 Check these directories:
 
