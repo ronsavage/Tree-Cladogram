@@ -41,7 +41,19 @@ my($result) = $image -> Read('canvas:white');
 
 die $result if $result;
 
-$result = $image -> Border(geometry => '2x2', fill => 'cyan');
+# Try Draw instead of Border. The problem will the latter is that
+# it adds the border to the outsize of the image, changing its size.
+
+#$result = $image -> Border(geometry => '2x2', fill => 'purple');
+
+$result = $image -> Draw
+					(
+						fill		=> 'none',
+						primitive	=> 'polyline',
+						points		=> '0,0 999,0 999,999 0,999 0,0',
+						stroke		=> 'purple',
+						strokewidth	=> 2,
+					);
 
 die $result if $result;
 
