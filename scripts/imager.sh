@@ -80,7 +80,7 @@ LEAF_FONT_FILE=/usr/share/fonts/truetype/dejavu/DejaVuSerif-Italic.ttf
 
 # Try.
 
-LEAF_FONT_FILE=/usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf
+LEAF_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeSansBold.ttf
 
 TITLE_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeSansBold.ttf
 
