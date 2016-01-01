@@ -4,6 +4,7 @@
 
 LEAF_FONT_FILE=Courier
 LEAF_FONT_FILE=/usr/share/fonts/truetype/dejavu/DejaVuSans-ExtraLight.ttf
+LEAF_FONT_FILE=DejaVu-Sans-ExtraLight
 
 # shell> fc-list | grep n022003l
 # /usr/share/fonts/type1/gsfonts/n022003l.pfb: Nimbus Mono L:style=Regular
@@ -12,12 +13,13 @@ LEAF_FONT_FILE=/usr/share/fonts/type1/gsfonts/n022003l.pfb
 
 # Good.
 
+LEAF_FONT_FILE=Courier-10-Pitch-Italic
 
 # OK.
 
-
 # Just OK.
 
+LEAF_FONT_FILE=Gentium (aka Gentium-Basic)
 
 # Not OK.
 
@@ -26,10 +28,12 @@ LEAF_FONT_FILE=Helvetica-Narrow-Oblique
 LEAF_FONT_FILE=Palatino-Italic
 LEAF_FONT_FILE=Century-Gothic
 LEAF_FONT_FILE=Cantarell-Regular
+LEAF_FONT_FILE=Free-Mono
 
 # Try.
 
 LEAF_FONT_FILE=/usr/share/fonts/type1/gsfonts/n022003l.pfb
+LEAF_FONT_FILE=Gentium-Basic
 
 TITLE_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeMono.ttf
 

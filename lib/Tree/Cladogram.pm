@@ -1342,6 +1342,9 @@ If you're using L<Debian|http://debian.org>, run C<fc-list> for a list of instal
 More information on Debian's support for fonts can be found on Debian's
 L<wiki|https://wiki.debian.org/Fonts>.
 
+See L<http://savage.net.au/misc/Debian.font.list.png> for the fonts on my laptop.
+Note: This file is 3.3 Mb, so you may have to zoom it to 500% to make it readable.
+
 See scripts/imager.sh for a list of fonts I have played with while developing this module.
 
 Further, note this text copied from the docs for L<Imager::Font>:
