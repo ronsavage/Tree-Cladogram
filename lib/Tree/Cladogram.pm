@@ -871,9 +871,11 @@ or unpack the distro, and then:
 
 =head1 Constructor and Initialization
 
-C<new()> is called as C<< my($cladtronic) = Tree::Cladogram -> new(k1 => v1, k2 => v2, ...) >>.
+C<new()> is called as
+C<< my($cladotron) = Tree::Cladogram::Imager -> new(k1 => v1, k2 => v2, ...) >> or as
+C<< my($cladotron) = Tree::Cladogram::ImageMagick -> new(k1 => v1, k2 => v2, ...) >>.
 
-It returns a new object of type C<Tree::Cladogram>.
+It returns a new object of type C<Tree::Cladogram::Imager> or C<Tree::Cladogram::ImageMagick>.
 
 Key-value pairs accepted in the parameter list (see corresponding methods for details
 [e.g. L</branch_color([$string])>]):
@@ -1203,6 +1205,93 @@ drawn.
 
 C<y_step> is a parameter to L</new()>.
 
+=head1 Scripts and data files shipped with this module
+
+=head2 Scripts
+
+See scripts/*.pl and scripts/*.sh.
+
+=over 4
+
+=item o Debian.font.list.pl
+
+Outputs to my web server's doc root, which is in Debian's RAM disk, a file called
+"$ENV{DR}/misc/Debian.font.list.png".
+
+The output file is not part of the distro (being 3.3 Mb), but is on line at
+L<http://savage.net.au/misc/Debian.font.list.png>.
+
+=item o image.magick.pl
+
+The program you would normally use to drive Tree::Cladogram::ImageMagick.
+
+See also image.magick.sh.
+
+=item o image.magick.sh
+
+A convenient way to run image.magick.pl.
+
+=item o imager.pl
+
+The program you would normally use to drive Tree::Cladogram::Imager.
+
+See also imager.sh.
+
+=item o imager.sh
+
+A convenient way to run imager.pl.
+
+=item o pod2html.sh
+
+A simple way for me to convert the docs into HTML.
+
+=item o test.image.magick.pl
+
+Outputs data/test.image.magick.png. I used this program to experiment with L<Image::Magick> while
+converting Tree::Cladogram::Imager into Tree::Cladogram::ImageMagick.
+
+=item o test.image.magick.sh
+
+A convenient way to run test.image.magick.pl.
+
+=back
+
+=head2 Data files
+
+See data/*.
+
+=over 4
+
+=item o nationalgeographic.01.clad
+
+This sample input file is discussed just below, at the start of the L</FAQ>.
+
+=item o nationalgeographic.01.png
+
+This is the output of rendering nationalgeographic.01.clad with L<Imager>.
+
+=item o nationalgeographic.02.png
+
+This is the output of rendering nationalgeographic.01.clad with L<Image::Magick>.
+
+=item o test.image.magick.png
+
+The is is output of scripts/test.image.magick.pl.
+
+=item o wikipedia.01.clad
+
+This sample input file is discussed just below, at the start of the L</FAQ>.
+
+=item o wikipedia.01.png
+
+This is the output of rendering wikipedia.01.clad with L<Imager>.
+
+=item o wikipedia.02.png
+
+This is the output of rendering wikipedia.01.clad with L<Image::Magick>.
+
+=back
+
 =head1 FAQ
 
 =head2 What is the format of the input file?
@@ -1223,7 +1312,7 @@ Sample 1 - L<https://en.wikipedia.org/wiki/Cladogram>:
 	                |
 	                +---- Flies
 
-This is the data file (shipped as data/cladogram.01.clad). The format is defined below:
+This is the data file (shipped as data/cladogram.01.clad). The format is defined formally below:
 
 	Parent  Place  Node
 	root    above  Beetles
@@ -1234,7 +1323,7 @@ This is the data file (shipped as data/cladogram.01.clad). The format is defined
 	2       below  Flies
 
 Output: L<Using Imager|http://savage.net.au/misc/wikipedia.01.png> and
-L<Using Image::Magick|http://savage.net.au/misc/wikipedia.02.png>.
+L<using Image::Magick|http://savage.net.au/misc/wikipedia.02.png>.
 
 Sample 2 - L<http://phenomena.nationalgeographic.com/2015/12/11/paleo-profile-the-smoke-hill-bird/>:
 
@@ -1286,7 +1375,8 @@ Sample 2 - L<http://phenomena.nationalgeographic.com/2015/12/11/paleo-profile-th
 	                                                |
 	                                                +--- Hesperornis regalis
 
-This is the data file (shipped as  data/nationalgeographic.01.clad). The format is defined below:
+This is the data file (shipped as  data/nationalgeographic.01.clad). The format is defined formally
+below:
 
 	Parent  Place  Node
 	root    above  Archaeopterix lithographica
@@ -1317,7 +1407,7 @@ This is the data file (shipped as  data/nationalgeographic.01.clad). The format 
 	12      below  Hesperornis regalis
 
 Output: L<Using Imager|http://savage.net.au/misc/nationalgeographic.01.png> and
-L<Using Image::Magick|http://savage.net.au/misc/nationalgeographic.02.png>.
+L<using Image::Magick|http://savage.net.au/misc/nationalgeographic.02.png>.
 
 File format:
 
@@ -1331,11 +1421,13 @@ File format:
 
 =item o The first line must match /Parent\tPlace\tNode/i
 
-=item o Column 1 is the name of the node
-
-Notice how every node has 2 mandatory lines.
+=item o Thereafter, column 1 is the name of the node
 
 =item o The word 'root' is (also) case-insensitive
+
+=item o Every node has 2 mandatory lines
+
+One for the daughter 'above' the current node, and one for the daughter 'below'.
 
 =item o Column 2 specifies where the daughter appears in relation to the node
 
@@ -1345,7 +1437,7 @@ Notice how every node has 2 mandatory lines.
 
 =item o Fabricate skeleton nodes to hold together the nodes you are interested in
 
-=item o Use digits for the fake node names
+=item o Use digits for the skeleton nodes' names
 
 The code hides the name of nodes which match /^(\d+|root)$/.
 
@@ -1471,6 +1563,18 @@ L<Tree::DAG_Node>
 
 The point is, if we find the closest sisters, then all sisters who do not have daughters could be
 make just as close. This would make the overall image more esthetically pleasing to the eye.
+
+=item o Perhaps one day adopt a plugin mechanism
+
+This would mean end-users could use either of:
+
+=over 4
+
+=item o use Tree::Cladogram 'Imager';
+
+=item o use Tree::Cladogram 'ImageMagick';
+
+=back
 
 =back
 
