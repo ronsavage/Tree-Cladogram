@@ -20,8 +20,6 @@ scripts/image.magick.pl
 scripts/image.magick.sh
 scripts/imager.pl
 scripts/imager.sh
-scripts/plot.pl
-scripts/plot.sh
 scripts/pod2html.sh
 scripts/test.image.magick.pl
 scripts/test.image.magick.sh
