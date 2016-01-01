@@ -60,8 +60,6 @@ sub _calculate_leaf_name_bounds
 			$y						= $$attributes{y} + int($leaf_font_size / 2);
 			$$attributes{bounds}	= [$x, $y, $x + $metrics[11] + 1, $y + $metrics[5]];
 
-			$self -> log('1 Leaf: ' . $node -> name . " \@ ($x, $y)");
-
 			$node -> attributes($attributes);
 
 			return 1; # Keep walking.
@@ -166,8 +164,6 @@ sub draw_leaf_name
 			x			=> $$bounds[0],
 			y			=> $$bounds[1],
 		);
-
-		$self -> log('2 Leaf: ' . $name . " \@ ($$bounds[0], $$bounds[1])");
 
 		if ($self -> debug)
 		{

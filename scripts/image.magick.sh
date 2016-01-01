@@ -2,6 +2,13 @@
 
 # Great.
 
+LEAF_FONT_FILE=Courier
+LEAF_FONT_FILE=/usr/share/fonts/truetype/dejavu/DejaVuSans-ExtraLight.ttf
+
+# shell> fc-list | grep n022003l
+# /usr/share/fonts/type1/gsfonts/n022003l.pfb: Nimbus Mono L:style=Regular
+
+LEAF_FONT_FILE=/usr/share/fonts/type1/gsfonts/n022003l.pfb
 
 # Good.
 
@@ -14,11 +21,15 @@
 
 # Not OK.
 
+LEAF_FONT_FILE=/usr/share/fonts/type1/gsfonts/p052003l.pfb
+LEAF_FONT_FILE=Helvetica-Narrow-Oblique
+LEAF_FONT_FILE=Palatino-Italic
+LEAF_FONT_FILE=Century-Gothic
+LEAF_FONT_FILE=Cantarell-Regular
 
 # Try.
 
 LEAF_FONT_FILE=/usr/share/fonts/type1/gsfonts/n022003l.pfb
-LEAF_FONT_FILE=/usr/share/fonts/truetype/dejavu/DejaVuSans-ExtraLight.ttf
 
 TITLE_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeMono.ttf
 
