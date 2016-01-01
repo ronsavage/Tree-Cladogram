@@ -756,11 +756,11 @@ sub run
 
 =head1 NAME
 
-C<Tree::Cladogram> - Render a tree as a cladogram
+C<Tree::Cladogram> - Render a cladogram using Imager or Image::Magick
 
 =head1 Synopsis
 
-This is scripts/plot.pl:
+This is scripts/imager.pl:
 
 	#!/usr/bin/env perl
 
@@ -771,7 +771,7 @@ This is scripts/plot.pl:
 
 	use Pod::Usage;
 
-	use Tree::Cladogram;
+	use Tree::Cladogram::Imager; # Or Tree::Cladogram::ImageMagick.
 
 	# ----------------------------------------------
 
@@ -797,29 +797,35 @@ This is scripts/plot.pl:
 	{
 		pod2usage(1) if ($option{'help'});
 
-		exit Tree::Cladogram -> new(%option) -> run;
+		exit Tree::Cladogram::Imager -> new(%option) -> run;
 	}
 	else
 	{
 		pod2usage(2);
 	}
 
+See also scripts/image.magick.pl.
+
 As you can see, you create an object and then call L</run()>.
 
-And this is the heart of scripts/plot.sh:
+And this is the heart of scripts/imager.sh:
 
 	perl -Ilib scripts/plot.pl \
-		-draw_frame $FRAME \
-		-input_file data/$i.01.clad \
-		-leaf_font_file $LEAF_FONT_FILE \
-		-output_file data/$i.01.png \
-		-title "$TITLE" \
-		-title_font_file $TITLE_FONT_FILE \
+	    -debug 0 \
+	    -draw_frame $FRAME \
+	    -input_file data/$i.01.clad \
+	    -leaf_font_file $LEAF_FONT_FILE \
+	    -output_file data/$i.01.png \
+	    -title "$TITLE" \
+	    -title_font_file $TITLE_FONT_FILE
+
+See also scripts/image.magick.sh.
 
 =head1 Description
 
 L<Tree::Cladogram> provides a mechanism to turn a tree into a cladogram image.
-The image of generated using L<Imager>. The input is read from a text file.
+The image of generated using L<Imager> or L<Image::Magic>.
+The input is read from a text file.
 
 For information about cladograms, see L<https://en.wikipedia.org/wiki/Cladogram>.
 
@@ -827,12 +833,15 @@ For another sample of a cladogram, see
 L<http://phenomena.nationalgeographic.com/2015/12/11/paleo-profile-the-smoke-hill-bird/>.
 
 Sample input is shipped as data/*.clad.
+The corresponding output is shipped as data/*.png, and is on-line:
 
-Sample output is shipped as data/*.png:
+L<wikipedia.01.clad output by Imager|http://savage.net.au/misc/wikipedia.01.png>
 
-L<http://savage.net.au/misc/wikipedia.01.png>
+L<wikipedia.01.clad output by Image::Magick|http://savage.net.au/misc/wikipedia.02.png>
 
-L<http://savage.net.au/misc/nationalgeographic.01.png>
+L<nationalgeographic.01.clad output by Imager|http://savage.net.au/misc/nationalgeographic.01.png>
+
+L<nationalgeographic.01.clad output by Image::Magick|http://savage.net.au/misc/nationalgeographic.02.png>
 
 =head1 Distributions
 
@@ -883,6 +892,15 @@ Specify the thickness of the branches.
 
 Default: 3 (px).
 
+=item o debug => $Boolean
+
+Specify non-production effects.
+
+Currently, the only extra effect is to craw fuchsia boxes around the leaf names. Clearly, this
+helped me debug the L<Image::Magick> side of things.
+
+Default: 0 (no extra effects).
+
 =item o draw_frame => $Boolean
 
 Specify that you want a frame around the image.
@@ -921,7 +939,10 @@ Default: '#0000ff' (blue).
 
 Specify the name of the font file to use for the names of the leaves.
 
-Default: '/usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf'.
+You can use path names, as per the default, or - using Image::Magick -, you can just use the name
+of the font, such as 'DejaVu-Sans-ExtraLight'.
+
+Default: '/usr/share/fonts/truetype/freefont/FreeMono.ttf'.
 
 =item o leaf_font_size => $integer
 
@@ -967,9 +988,12 @@ Default: '#000000' (black).
 
 Specify the name of the font file to use for the names of the leaves.
 
+You can use path names, as per the default, or - using Image::Magick -, you can just use the name
+of the font, such as 'DejaVu-Sans-ExtraLight'.
+
 Default: '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf'.
 
-=item o leaf_font_size => $integer
+=item o title_font_size => $integer
 
 Specify the size of the text used for the name of each leaf.
 
@@ -985,7 +1009,7 @@ Default: 15 (px).
 
 The horizontal length of branches.
 
-See also C<final_x_step> and C<y_step>.
+See also L</final_x_step([$integer])> and L</y_step([$integer])>.
 
 Default: 50 (px).
 
@@ -996,7 +1020,7 @@ The vertical length of the branches.
 Note: Some vertical branches will be shortened if the code detects overlapping when leaf names are
 drawn.
 
-See also C<x_step>.
+See also L</x_step([$integer])>.
 
 Default: 40 (px).
 
@@ -1015,6 +1039,12 @@ C<branch_color> is a parameter to L</new()>.
 Get or set the width of branches.
 
 C<branch_width> is a parameter to L</new()>.
+
+=head2 debug([$Boolean])
+
+Get or set the option to activate debug (non-production) mode.
+
+C<debug> is a parameter to L</new()>.
 
 =head2 draw_frame([$Boolean])
 
@@ -1050,7 +1080,10 @@ C<leaf_font_color> is a parameter to L</new()>.
 
 Get or set the name of the font file used for leaf names.
 
-C<leaf_font_file> is a parameter to L</new()>.
+You can use path names, as per the default, or - using Image::Magick -, you can just use the name
+of the font, such as 'DejaVu-Sans-ExtraLight'.
+
+<leaf_font_file> is a parameter to L</new()>.
 
 =head2 leaf_font_size([$integer])
 
@@ -1072,9 +1105,14 @@ Get the right-most point at which something was drawn.
 
 This value is determined by examining the bounding boxes of all leaf names.
 
+In the case that the title is wider that the right-most leaf's name, C<maximum_x> reflects this
+fact.
+
 =head2 maximum_y()
 
 Get the bottom-most point at which something was drawn.
+
+This value does not include the title, if any.
 
 =head2 new()
 
@@ -1128,6 +1166,9 @@ C<title_font_color> is a parameter to L</new()>.
 =head2 title_font_file([$string])
 
 Get or set the name of the font file used for the title.
+
+You can use path names, as per the default, or - using Image::Magick -, you can just use the name
+of the font, such as 'DejaVu-Sans-ExtraLight'.
 
 C<title_font_file> is a parameter to L</new()>.
 
@@ -1192,7 +1233,8 @@ This is the data file (shipped as data/cladogram.01.clad). The format is defined
 	2       above  Butterflies, moths
 	2       below  Flies
 
-Output: L<http://savage.net.au/misc/wikipedia.01.png>.
+Output: L<Using Imager|http://savage.net.au/misc/wikipedia.01.png> and
+L<Using Image::Magick|http://savage.net.au/misc/wikipedia.02.png>.
 
 Sample 2 - L<http://phenomena.nationalgeographic.com/2015/12/11/paleo-profile-the-smoke-hill-bird/>:
 
@@ -1274,7 +1316,8 @@ This is the data file (shipped as  data/nationalgeographic.01.clad). The format 
 	12      above  Parahesperornis alexi
 	12      below  Hesperornis regalis
 
-Output: L<http://savage.net.au/misc/nationalgeographic.01.png>.
+Output: L<Using Imager|http://savage.net.au/misc/nationalgeographic.01.png> and
+L<Using Image::Magick|http://savage.net.au/misc/nationalgeographic.02.png>.
 
 File format:
 
@@ -1308,11 +1351,14 @@ The code hides the name of nodes which match /^(\d+|root)$/.
 
 =back
 
-=head2 Which versions of the code did you use?
+=head2 Which versions of the renderers did you use?
 
 L<Imager> V 1.004.
 
 L<Image::Magick> V 6.9.3-0 Q16.
+
+For help installing Image::Magick under Debian, see
+L<http://savage.net.au/ImageMagick/html/Installation.html>.
 
 =head2 What image formats are supported?
 
@@ -1324,6 +1370,9 @@ My default install of L<Imager> lists:
 	png
 	pnm
 	raw
+
+L<Image::Magick> supports a huge range of formats (221 actually). To list them, run
+scripts/test.image.magick.pl. Note: This program writes to data/test.image.magick.png.
 
 =head2 What fonts are supported?
 
@@ -1347,6 +1396,8 @@ Note: This file is 3.3 Mb, so you may have to zoom it to 500% to make it readabl
 
 See scripts/imager.sh for a list of fonts I have played with while developing this module.
 
+When testing Image::Magick I tried a small number of fonts. See scripts/image.magick.sh.
+
 Further, note this text copied from the docs for L<Imager::Font>:
 
 	This module handles creating Font objects used by Imager. The module also handles querying
@@ -1367,7 +1418,7 @@ My default install of L<Imager> reports:
 
 =head2 How does leaf_font_size interact with y_step?
 
-This might depend on the font, but here are some tests I ran with the default leaf font:
+This might depend on the font, but here are some tests I ran with the one leaf font:
 
 =over 4
 
@@ -1389,6 +1440,13 @@ This might depend on the font, but here are some tests I ran with the default le
 
 =back
 
+=head2 Why did you use Tree::DAG_Node and not something simple like Tree::Simple?
+
+I started with L<Tree::Simple> precisely because it's simple, but found it awkward to use.
+
+I did use Tree::Simple in L<HTML::Parser::Simple>. That module was deliberately kept simple,
+but before that, and since, I've always gone back to Tree::DAG_Node.
+
 =head2 How is overlap between leaves detected?
 
 The process starts by calling the undocumented method C<_check_for_overlap()>.
@@ -1396,6 +1454,10 @@ The process starts by calling the undocumented method C<_check_for_overlap()>.
 =head1 See Also
 
 L<Imager>
+
+L<Image::Magick>
+
+L<Help installing Image::Magick|http://savage.net.au/ImageMagick/html/Installation.html>
 
 L<Tree::DAG_Node>
 
@@ -1408,7 +1470,7 @@ L<Tree::DAG_Node>
 =item o Check how close sisters are
 
 The point is, if we find the closest sisters, then all sisters who do not have daughters could be
-make just as close. This would make the overall image more esthetically pleasing.
+make just as close. This would make the overall image more esthetically pleasing to the eye.
 
 =back
 

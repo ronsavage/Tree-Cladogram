@@ -17,9 +17,14 @@ LEAF_FONT_FILE=Courier-10-Pitch-Italic
 
 # OK.
 
+LEAF_FONT_FILE=Liberation-Mono
+
 # Just OK.
 
-LEAF_FONT_FILE=Gentium (aka Gentium-Basic)
+# These 2 are the same.
+
+LEAF_FONT_FILE=Gentium
+LEAF_FONT_FILE=Gentium-Basic
 
 # Not OK.
 
@@ -29,11 +34,12 @@ LEAF_FONT_FILE=Palatino-Italic
 LEAF_FONT_FILE=Century-Gothic
 LEAF_FONT_FILE=Cantarell-Regular
 LEAF_FONT_FILE=Free-Mono
+LEAF_FONT_FILE=AvantGarde-Book
 
 # Try.
 
 LEAF_FONT_FILE=/usr/share/fonts/type1/gsfonts/n022003l.pfb
-LEAF_FONT_FILE=Gentium-Basic
+LEAF_FONT_FILE=Nimbus-Mono-L
 
 TITLE_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeMono.ttf
 

@@ -8,12 +8,12 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
-WriteMakefile
+my(%params) =
 (
 	($] ge '5.005') ?
 	(
 		AUTHOR   => 'Ron Savage (ron@savage.net.au)',
-		ABSTRACT => 'Render a tree as a cladogram',
+		ABSTRACT => 'Render a cladogram using Imager or Image::Magick',
 	) : (),
 	clean =>
 	{
@@ -48,3 +48,32 @@ WriteMakefile
 	},
 	VERSION_FROM => 'lib/Tree/Cladogram.pm',
 );
+
+if ( ($ExtUtils::MakeMaker::VERSION =~ /^\d\.\d\d$/) && ($ExtUtils::MakeMaker::VERSION > 6.30) )
+{
+	$params{LICENSE} = 'artistic_2';
+}
+
+if ($ExtUtils::MakeMaker::VERSION ge '6.46')
+{
+	$params{META_MERGE} =
+	{
+		'meta-spec' =>
+		{
+		'version' => 2,
+		},
+		resources   =>
+		{
+		'bugtracker' => 'https://rt.cpan.org/Public/Dist/Display.html?Name=Tree-Cladogram',
+		'license' => 'http://opensource.org/licenses/Artistic-2.0',
+			repository =>
+			{
+		'type' => 'git',
+		'url' => 'https://github.com/ronsavage/Tree-Cladogram.git',
+		'web' => 'https://github.com/ronsavage/Tree-Cladogram',
+			},
+		},
+	};
+}
+
+WriteMakefile(%params);

@@ -31,6 +31,10 @@ my($image) = Image::Magick -> new(size => "$maximum_x x $maximum_y");
 
 print "Created image of size ($maximum_x, $maximum_y). \n";
 
+my(@formats) = $image -> QueryFormat;
+
+print "Image formats supported (Count: @{[$#formats + 1]}): \n", join("\n", @formats), ". \n";
+
 # Warning:
 # The following line is mandatory before the code below will work.
 # Of course, the color does not have to be white.
