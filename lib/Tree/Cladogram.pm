@@ -1308,6 +1308,12 @@ The code hides the name of nodes which match /^(\d+|root)$/.
 
 =back
 
+=head2 Which versions of the code did you use?
+
+L<Imager> V 1.004.
+
+L<Image::Magick> V 6.9.3-0 Q16.
+
 =head2 What image formats are supported?
 
 My default install of L<Imager> lists:
@@ -1394,9 +1400,12 @@ L<Tree::DAG_Node>
 
 =over 4
 
-=item o Create 2 sub-classes, to support L<Imager> and L<Image::Magick>
-
 =item o In _check_node_bounds(), could there be cases when nodes should be moved up?
+
+=item o Check how close sisters are
+
+The point is, if we find the closest sisters, then all sisters who do not have daughters could be
+make just as close. This would make the overall image more esthetically pleasing.
 
 =back
 

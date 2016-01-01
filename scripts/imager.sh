@@ -100,10 +100,8 @@ for i in nationalgeographic wikipedia; do
 		TITLE='The diversity of hesperornithiforms. From Bell and Chiappe, 2015'
 	fi
 
-	#echo $NAME.01.clad
-
 	perl -Ilib scripts/imager.pl \
-		-debug 1 \
+		-debug 0 \
 		-draw_frame $FRAME \
 		-input_file data/$i.01.clad \
 		-leaf_font_file $LEAF_FONT_FILE \

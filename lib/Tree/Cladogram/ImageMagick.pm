@@ -57,7 +57,7 @@ sub _calculate_leaf_name_bounds
 								);
 			$attributes				= $node -> attributes;
 			$x						= $$attributes{x} + $x_step + 4;
-			$y						= $$attributes{y} - int($leaf_font_size / 2);
+			$y						= $$attributes{y} + int($leaf_font_size / 2);
 			$$attributes{bounds}	= [$x, $y, $x + $metrics[11] + 1, $y + $metrics[5]];
 
 			$self -> log('1 Leaf: ' . $node -> name . " \@ ($x, $y)");
@@ -87,7 +87,7 @@ sub _calculate_title_metrics
 
 	$self -> title_width($metrics[11] + 1);
 	$self -> title_x(int( ($maximum_x - $metrics[11]) / 2) );
-	$self -> title_y(int( ($maximum_y - $self -> leaf_font_size) / 2) );
+	$self -> title_y($maximum_y - $self -> leaf_font_size);
 
 } # End of _calculate_title_metrics.
 
@@ -158,13 +158,13 @@ sub draw_leaf_name
 		$image -> Annotate
 		(
 			font		=> $self -> leaf_font_file,
-			gravity		=> 'west',
+			gravity		=> 'forget',
 			pointsize	=> $font_size,
 			stroke		=> $self -> leaf_font_color,
 			strokewidth	=> 1,
 			text		=> $name,
 			x			=> $$bounds[0],
-			y			=> $$bounds[1] - (5 * $font_size),
+			y			=> $$bounds[1],
 		);
 
 		$self -> log('2 Leaf: ' . $name . " \@ ($$bounds[0], $$bounds[1])");
@@ -174,6 +174,7 @@ sub draw_leaf_name
 			my($fuchsia)	= 'fuchsia';
 			my(@x)			= ($$bounds[0], $$bounds[2], $$bounds[2], $$bounds[0]);
 			my(@y)			= ($$bounds[1], $$bounds[1], $$bounds[3], $$bounds[3]);
+			@y				= map{$_ - $font_size} @y; # WTF?
 			my($result)		= $image -> Draw
 								(
 									fill		=> 'none',
@@ -222,7 +223,7 @@ sub draw_title
 		$image -> Annotate
 		(
 			font		=> $self -> title_font_file,
-			gravity		=> 'west',
+			gravity		=> 'forget',
 			pointsize	=> $self -> title_font_size,
 			stroke		=> $self -> title_font_color,
 			strokewidth	=> 1,

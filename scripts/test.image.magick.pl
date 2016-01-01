@@ -59,35 +59,6 @@ $result = $image -> Draw
 
 die $result if $result;
 
-print "Annotating with font $font_file. \n";
-
-my(@metrics) = $image -> QueryFontMetrics
-				(
-					font		=> $font_file,
-					pointsize	=> $font_size,
-					text		=> $title,
-					x			=> 0,
-					y			=> 0,
-				);
-
-my(@metric_label) = (qw/
-character_width
-character_height
-ascender
-descender
-text_width
-text_height
-maximum_horizontal_advance
-bounds_x1
-bounds_y1
-bounds_x2
-bounds_y2
-origin_x
-origin_y
-/);
-
-print "Title metrics: \n", join("\n", map{"$_: $metric_label[$_]: $metrics[$_]"} 0 .. $#metrics), ". \n";
-
 # Put a rectangle across the middle.
 
 @x = (100, ($maximum_x - 100) );
@@ -125,15 +96,45 @@ for (my $y = 0; $y <= $maximum_y; $y += 10)
 
 # Put the title in the bottom-center.
 
-my($title_x)	= int( ($maximum_x - $metrics[4]) / 2);
-my($title_y)	= int( ($maximum_y - $font_size) / 2);
+print "Annotating with font $font_file. \n";
 
-print "Point at which to start title: ($title_x, $title_y), using gravity 'west'. \n";
+my(@metrics) = $image -> QueryFontMetrics
+				(
+					font		=> $font_file,
+					pointsize	=> $font_size,
+					text		=> $title,
+					x			=> 0,
+					y			=> 0,
+				);
+
+my(@metric_label) = (qw/
+character_width
+character_height
+ascender
+descender
+text_width
+text_height
+maximum_horizontal_advance
+bounds_x1
+bounds_y1
+bounds_x2
+bounds_y2
+origin_x
+origin_y
+/);
+
+print "Title metrics: \n", join("\n", map{"$_: $metric_label[$_]: $metrics[$_]"} 0 .. $#metrics), ". \n";
+
+my($gravity)	= 'forget';
+my($title_x)	= int( ($maximum_x - $metrics[11]) / 2);
+my($title_y)	= $maximum_y - $font_size;
+
+print "Point at which to start title: ($title_x, $title_y), using gravity '$gravity'. \n";
 
 $result = $image -> Annotate
 			(
 				font		=> $font_file,
-				gravity		=> 'west',
+				gravity		=> $gravity,
 				pointsize	=> $font_size,
 				stroke		=> 'blue',
 				strokewidth	=> 1,
