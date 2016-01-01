@@ -43,6 +43,7 @@
             "Test::Stream" : "1.302026",
             "Tree::DAG_Node" : "1.27",
             "Types::Standard" : "1",
+            "parent" : "0",
             "strict" : "0",
             "warnings" : "0"
          }
