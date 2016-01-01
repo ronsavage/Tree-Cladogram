@@ -32,6 +32,7 @@ WriteMakefile
 	{
 		'File::Slurper'		=> 0.008,
 		'Getopt::Long'		=> 0,
+		#'Image::Magick'	=> 6.9.3, # Image::Magick is optional.
 		'Imager'			=> 1.004,
 		'Imager::Fill'		=> 1.012,
 		'Moo'				=> 2.000002,
