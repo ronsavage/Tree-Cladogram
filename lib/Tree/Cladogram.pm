@@ -112,6 +112,14 @@ has maximum_y =>
 	required => 0,
 );
 
+has minimum_sister_separation =>
+(
+	default  => sub{return 0},
+	is       => 'rw',
+	isa      => Int,
+	required => 0,
+);
+
 has minimum_y =>
 (
 	default  => sub{return 0},
@@ -230,6 +238,63 @@ sub BUILD
 
 # ------------------------------------------------
 
+sub _adjust_minimum_sister_separation
+{
+	my($self)						= @_;
+	my($minimum_y)					= 0;
+	my($minimum_sister_separation)	= $self -> minimum_sister_separation;
+
+	my(@attributes, $actual_sister_separation);
+	my(@bounds);
+	my(@daughters);
+	my(@names, $new_sister_separation);
+
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node)	= @_;
+			@daughters	= $node -> daughters;
+
+			if ($#daughters == 2)
+			{
+				@attributes	= map{$_ -> attributes} @daughters;
+				@names		= map{$_ -> name} @daughters;
+
+				return 1 if ($names[2] =~ /^\d+$/);
+
+				$actual_sister_separation = ${$attributes[2]}{y} - ${$attributes[1]}{y};
+
+				if ($actual_sister_separation >= $minimum_sister_separation)
+				{
+					$new_sister_separation	= ($actual_sister_separation == $minimum_sister_separation) ? 6 : int( ($actual_sister_separation - $minimum_sister_separation) / 2);
+					${$attributes[1]}{y}	+= $new_sister_separation;
+					${$attributes[2]}{y}	-= $new_sister_separation;
+					@bounds					= map{$$_{bounds} } @attributes;
+					${$bounds[1]}[1]		+= $new_sister_separation;
+					${$bounds[1]}[3]		+= $new_sister_separation;
+					${$bounds[2]}[1]		-= $new_sister_separation;
+					${$bounds[2]}[3]		-= $new_sister_separation;
+
+					# What's really scary is that I don't have to do this:
+					# ${$attributes[1]}{bounds} = $bounds[1];
+					# ${$attributes[2]}{bounds} = $bounds[2];
+
+					$daughters[1] -> attributes($attributes[1]);
+					$daughters[2] -> attributes($attributes[2]);
+				}
+			}
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+} # End of _adjust_minimum_sister_separation.
+
+# ------------------------------------------------
+
 sub _calculate_basic_attributes
 {
 	my($self)	= @_;
@@ -282,6 +347,54 @@ sub _calculate_basic_attributes
 	});
 
 } # End of _calculate_basic_attributes.
+
+# ------------------------------------------------
+
+sub _calculate_minimum_sister_separation
+{
+	my($self)						= @_;
+	my($minimum_y)					= 0;
+	my($minimum_sister_separation)	= $self -> maximum_y;
+
+	$self -> minimum_sister_separation($minimum_sister_separation);
+
+	my(@attributes);
+	my(@daughters);
+	my(@names);
+	my($sister_separation);
+
+	$self -> root -> walk_down
+	({
+		callback =>
+		sub
+		{
+			my($node)	= @_;
+			@daughters	= $node -> daughters;
+
+			if ($#daughters == 2)
+			{
+				@attributes	= map{$_ -> attributes} @daughters;
+				@names		= map{$_ -> name} @daughters;
+
+				return 1 if ($names[2] =~ /^\d+$/);
+
+				$sister_separation = ${$attributes[2]}{y} - ${$attributes[1]}{y};
+
+				if ($sister_separation < $minimum_sister_separation)
+				{
+					$minimum_sister_separation = $sister_separation;
+				}
+			}
+
+			return 1; # Keep walking.
+		},
+		_depth	=> 0,
+	});
+
+	$self -> minimum_sister_separation($minimum_sister_separation);
+	$self -> _adjust_minimum_sister_separation;
+
+} # End of _calculate_minimum_sister_separation.
 
 # ------------------------------------------------
 
@@ -738,6 +851,7 @@ sub run
 	$self -> _check_for_overlap;
 	$self -> find_maximum_x;
 	$self -> find_maximum_y;
+	$self -> _calculate_minimum_sister_separation;
 	$self -> draw_image;
 
 	$self -> log(join('', map("$_\n", @{$self -> root -> tree2string}) ) ) if ($self -> print_tree);
@@ -1579,33 +1693,6 @@ L<Image::Magick>
 L<Help installing Image::Magick|http://savage.net.au/ImageMagick/html/Installation.html>
 
 L<Tree::DAG_Node>
-
-=head1 TODO
-
-=over 4
-
-=item o In _check_node_bounds(), could there be cases when nodes should be moved up?
-
-=item o Check how close sisters are
-
-The point is, if we find the closest sisters, then all sisters who do not have daughters could be
-make just as close. This would make the overall image more esthetically pleasing to the eye.
-
-=item o Perhaps one day adopt a plugin mechanism
-
-This would mean end-users could use either of:
-
-=over 4
-
-=item o use Tree::Cladogram 'Imager';
-
-=item o use Tree::Cladogram 'ImageMagick';
-
-=back
-
-Or, equivalently, the user could specify the rendering engine at run-time.
-
-=back
 
 =head1 Machine-Readable Change Log
 
