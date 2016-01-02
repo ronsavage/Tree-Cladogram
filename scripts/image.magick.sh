@@ -10,6 +10,8 @@ LEAF_FONT_FILE=DejaVu-Sans-ExtraLight
 # /usr/share/fonts/type1/gsfonts/n022003l.pfb: Nimbus Mono L:style=Regular
 
 LEAF_FONT_FILE=/usr/share/fonts/type1/gsfonts/n022003l.pfb
+# Aka
+LEAF_FONT_FILE=Nimbus-Mono-L
 
 # Good.
 
@@ -38,10 +40,9 @@ LEAF_FONT_FILE=AvantGarde-Book
 
 # Try.
 
-LEAF_FONT_FILE=/usr/share/fonts/type1/gsfonts/n022003l.pfb
-LEAF_FONT_FILE=Nimbus-Mono-L
+LEAF_FONT_FILE=FreeMono
 
-TITLE_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeMono.ttf
+TITLE_FONT_FILE=FreeMono
 
 echo Font: $LEAF_FONT_FILE
 

@@ -80,9 +80,9 @@ LEAF_FONT_FILE=/usr/share/fonts/truetype/dejavu/DejaVuSerif-Italic.ttf
 
 # Try.
 
-LEAF_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeSansBold.ttf
+LEAF_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeMono.ttf
 
-TITLE_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeSansBold.ttf
+TITLE_FONT_FILE=/usr/share/fonts/truetype/freefont/FreeMono.ttf
 
 echo Font: $LEAF_FONT_FILE
 

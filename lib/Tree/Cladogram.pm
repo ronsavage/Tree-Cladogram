@@ -542,7 +542,7 @@ sub find_maximum_y
 		_depth	=> 0,
 	});
 
-	$self -> maximum_y($maximum_y);
+	$self -> maximum_y($maximum_y + 2 * $self -> title_font_size);
 
 } # End of find_maximum_y.
 
@@ -823,9 +823,13 @@ See also scripts/image.magick.sh.
 
 =head1 Description
 
-L<Tree::Cladogram> provides a mechanism to turn a tree into a cladogram image.
-The image of generated using L<Imager> or L<Image::Magic>.
-The input is read from a text file.
+C<Tree::Cladogram> provides a mechanism to turn a tree into a cladogram image.
+The image is generated using L<Imager> or L<Image::Magic>.
+
+The image type created is determined by the suffix of the output file. See
+L</What image formats are supported?> for details.
+
+The details of the cladogram are read from a text file. See the L</FAQ> for details.
 
 For information about cladograms, see L<https://en.wikipedia.org/wiki/Cladogram>.
 
@@ -886,6 +890,8 @@ Key-value pairs accepted in the parameter list (see corresponding methods for de
 
 Specify the color of the branches in the tree.
 
+See (in the FAQ) L</What colors are supported?> for details about colors.
+
 Default: '#7e7e7e' (gray).
 
 =item o branch_width => $integer
@@ -898,8 +904,9 @@ Default: 3 (px).
 
 Specify non-production effects.
 
-Currently, the only extra effect is to craw fuchsia boxes around the leaf names. Clearly, this
-helped me debug the L<Image::Magick> side of things.
+Currently, the only extra effect is to draw fuchsia boxes around the leaf names.
+
+Frankly, this helped me debug the L<Image::Magick> side of things.
 
 Default: 0 (no extra effects).
 
@@ -911,7 +918,7 @@ Default: 0 (no frame).
 
 =item o final_x_step => $integer
 
-Specify the length of the final branch leading to the names of the leaves.
+Specify an extra bit for the length of the final branch leading to the names of the leaves.
 
 Default: 30 (px).
 
@@ -927,7 +934,7 @@ Default: '#0000ff' (blue).
 
 Specify the name of the *.clad file to read. Of course, the suffix does not have to be 'clad'.
 
-The format of this file is specified in the L<FAQ>.
+The format of this file is specified in the L</FAQ>.
 
 Default: ''.
 
@@ -956,13 +963,16 @@ Default: 16 (points).
 
 Specify the distance from the left of the image to the left-most point at which something is drawn.
 
+This also sets the right-hand margin.
+
 Default: 15 (px).
 
 =item o output_file => $string
 
 Specify the name of the image file to write.
 
-Image formats supported are anything supported by L<Imager>. See the L<FAQ> for more.
+Image formats supported are anything supported by L<Imager> or L<Image::Magick>.
+See the L</What image formats are supported?> for details.
 
 Default: '' (no output).
 
@@ -982,13 +992,13 @@ Default: '' (no title).
 
 =item o title_font_color => $string
 
-Specify the font color of the name of each leaf.
+Specify the font color of the title.
 
 Default: '#000000' (black).
 
 =item o title_font_file => $string
 
-Specify the name of the font file to use for the names of the leaves.
+Specify the name of the font file to use for the title.
 
 You can use path names, as per the default, or - using Image::Magick -, you can just use the name
 of the font, such as 'DejaVu-Sans-ExtraLight'.
@@ -997,13 +1007,15 @@ Default: '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf'.
 
 =item o title_font_size => $integer
 
-Specify the size of the text used for the name of each leaf.
+Specify the size of the text used for the name of the title.
 
 Default: 16 (points).
 
 =item o top_margin => $integer
 
 Specify the distance from the top of the image to the top-most point at which something is drawn.
+
+This also sets the bottom margin.
 
 Default: 15 (px).
 
@@ -1032,7 +1044,9 @@ Default: 40 (px).
 
 =head2 branch_color([$string])
 
-Get or set the color used to fraw branches.
+Get or set the color used to draw branches.
+
+See (in the FAQ) L</What colors are supported?> for details about colors.
 
 C<branch_color> is a parameter to L</new()>.
 
@@ -1044,7 +1058,7 @@ C<branch_width> is a parameter to L</new()>.
 
 =head2 debug([$Boolean])
 
-Get or set the option to activate debug (non-production) mode.
+Get or set the option to activate debug mode.
 
 C<debug> is a parameter to L</new()>.
 
@@ -1056,7 +1070,7 @@ C<draw_frame> is a parameter to L</new()>.
 
 =head2 final_x_step([$integer])
 
-Get or set the horizontal length of the branch leading to leaf names.
+Get or set a bit extra for the horizontal length of the branch leading to leaf names.
 
 C<final_x_step> is a parameter to L</new()>.
 
@@ -1085,7 +1099,7 @@ Get or set the name of the font file used for leaf names.
 You can use path names, as per the default, or - using Image::Magick -, you can just use the name
 of the font, such as 'DejaVu-Sans-ExtraLight'.
 
-<leaf_font_file> is a parameter to L</new()>.
+C<leaf_font_file> is a parameter to L</new()>.
 
 =head2 leaf_font_size([$integer])
 
@@ -1114,7 +1128,7 @@ fact.
 
 Get the bottom-most point at which something was drawn.
 
-This value does not include the title, if any.
+This value includes the title, if any.
 
 =head2 new()
 
@@ -1126,7 +1140,7 @@ Get or set the name of the output file.
 
 The file suffix determines what type of file is written.
 
-For more on supported image types, see the L<FAQ>.
+For more on supported image types, see the L</What image formats are supported?>.
 
 C<output_file> is a parameter to L</new()>.
 
@@ -1413,13 +1427,18 @@ File format:
 
 =over 4
 
-=item o All lines are tab separated
+=item o Words and numbers on each line are tab separated
+
+Oh, all right. You can use any number of spaces too, but why bother?
 
 =item o There are 3 columns
 
 =over 4
 
 =item o The first line must match /Parent\tPlace\tNode/i
+
+For non-programmers, the /.../ is a regular expression, just saying the program tests for that
+exact string. The '\t's represent tabs and the suffix 'i' means use a case-insensitive test.
 
 =item o Thereafter, column 1 is the name of the node
 
@@ -1466,6 +1485,15 @@ My default install of L<Imager> lists:
 L<Image::Magick> supports a huge range of formats (221 actually). To list them, run
 scripts/test.image.magick.pl. Note: This program writes to data/test.image.magick.png.
 
+=head2 What colors are supported?
+
+See L<Imager::Color> for Imager's docs on color. But you're probably better off using
+L<Image::Magick>'s table mentioned next, since my module only accepts colors. It does not allow
+you to provide an Imager::Color object as a parameter.
+
+See L<Image::Magick colors|http://www.imagemagick.org/script/color.php> for a huge table of both
+names and hex values.
+
 =head2 What fonts are supported?
 
 Check these directories:
@@ -1486,9 +1514,8 @@ L<wiki|https://wiki.debian.org/Fonts>.
 See L<http://savage.net.au/misc/Debian.font.list.png> for the fonts on my laptop.
 Note: This file is 3.3 Mb, so you may have to zoom it to 500% to make it readable.
 
-See scripts/imager.sh for a list of fonts I have played with while developing this module.
-
-When testing Image::Magick I tried a small number of fonts. See scripts/image.magick.sh.
+See scripts/imager.sh and scripts/image.magick.sh for lists of fonts I have played with while
+developing this module.
 
 Further, note this text copied from the docs for L<Imager::Font>:
 
@@ -1532,12 +1559,12 @@ This might depend on the font, but here are some tests I ran with the one leaf f
 
 =back
 
-=head2 Why did you use Tree::DAG_Node and not something simple like Tree::Simple?
+=head2 Why did you use Tree::DAG_Node and not something like Tree::Simple?
 
 I started with L<Tree::Simple> precisely because it's simple, but found it awkward to use.
 
 I did use Tree::Simple in L<HTML::Parser::Simple>. That module was deliberately kept simple,
-but before that, and since, I've always gone back to Tree::DAG_Node.
+but before that, and since, I've always gone back to L<Tree::DAG_Node>.
 
 =head2 How is overlap between leaves detected?
 
@@ -1575,6 +1602,8 @@ This would mean end-users could use either of:
 =item o use Tree::Cladogram 'ImageMagick';
 
 =back
+
+Or, equivalently, the user could specify the rendering engine at run-time.
 
 =back
 
