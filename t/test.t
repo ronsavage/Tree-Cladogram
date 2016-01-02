@@ -51,19 +51,11 @@ Tree::Cladogram::Imager -> new
 my(@images)			= (Imager -> new(file => $in_file_name), Imager -> new(file => $out_file_name) );
 my(@statistics)		= map{get_image_statistics($_)} @images;
 
-for my $i (0 .. $#statistics)
-{
-	for my $key (sort keys %{$statistics[$i]})
-	{
-		note "$key => $statistics[$i]{$key}";
-	}
-}
-
 # Check that the files are actually different.
 
 ok($in_file_name ne $out_file_name, "Comparing $in_file_name and $out_file_name");
 
-# Compare the statistics of each file.
+# Compare the statistics of each image.
 
 for my $key (sort keys %{$statistics[0]})
 {
