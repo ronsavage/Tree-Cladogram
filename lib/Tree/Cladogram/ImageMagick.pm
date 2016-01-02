@@ -155,6 +155,7 @@ sub draw_leaf_name
 
 		$image -> Annotate
 		(
+			antialias	=> 'false',
 			font		=> $self -> leaf_font_file,
 			gravity		=> 'forget',
 			pointsize	=> $font_size,
@@ -218,6 +219,7 @@ sub draw_title
 	{
 		$image -> Annotate
 		(
+			antialias	=> 'false',
 			font		=> $self -> title_font_file,
 			gravity		=> 'forget',
 			pointsize	=> $self -> title_font_size,
