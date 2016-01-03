@@ -24,8 +24,5 @@ scripts/imager.sh
 scripts/pod2html.sh
 scripts/test.image.magick.pl
 scripts/test.image.magick.sh
-t/FreeSansBold.ttf
 t/test.t
-t/wikipedia.01.clad
-t/wikipedia.01.png
 xt/author/pod.t
