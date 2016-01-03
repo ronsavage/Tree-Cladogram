@@ -1686,6 +1686,8 @@ The process starts by calling the undocumented method C<_check_for_overlap()>.
 
 =head1 See Also
 
+L<Bio::Tree::Draw::Cladogram>
+
 L<Imager>
 
 L<Image::Magick>
