@@ -38,14 +38,18 @@
             "Imager::Fill" : "1.012",
             "Moo" : "2.000002",
             "Pod::Usage" : "1.67",
-            "Test::More" : "1.001014",
-            "Test::Pod" : "1.48",
-            "Test::Stream" : "1.302026",
             "Tree::DAG_Node" : "1.27",
             "Types::Standard" : "1",
             "parent" : "0",
             "strict" : "0",
             "warnings" : "0"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "Test::More" : "1.001014",
+            "Test::Pod" : "1.48",
+            "Test::Stream" : "1.302026"
          }
       }
    },
