@@ -1,5 +1,14 @@
 Revision history for Perl extension Tree::Cladogram.
 
+1.02  2016-04-25T09:26:00
+	- No code changes.
+	- Fix my licence (sic) mess so all references are to Perl. This involves edits to Makefile.PL
+		and LICENSE. See RT#113949. Thanx Kent Fredric.
+	- Fix Makefile.PL so modules only used for testing are in TEST_REQUIRES and not PREREQ_PM.
+		See RT#113948. Thanx Kent Fredric.
+	- Fix README so it more-or-less conforms to the Perl Foundation's guidelines at
+		http://www.perlfoundation.org/cpan_licensing_guidelines.
+
 1.01  2016-01-04T09:52:00
 	- Disable testing images in t/test.t because some CPAN testers have installed Imager without
 		support for *.ttf fonts. So, a group of tests have been commented out.

@@ -39,19 +39,22 @@ my(%params) =
 		'parent'			=> 0,
 		'Pod::Usage'		=> 1.67,
 		'strict'			=> 0,
-		'Test::More'		=> 1.001014,
-		'Test::Stream'		=> 1.302026,
-		'Test::Pod'			=> 1.48,
 		'Tree::DAG_Node'	=> 1.27,
 		'Types::Standard'	=> 1.00000,
 		'warnings'			=> 0,
+	},
+	TEST_REQUIRES =>
+	{
+		'Test::More'		=> 1.001014,
+		'Test::Stream'		=> 1.302026,
+		'Test::Pod'			=> 1.48,
 	},
 	VERSION_FROM => 'lib/Tree/Cladogram.pm',
 );
 
 if ( ($ExtUtils::MakeMaker::VERSION =~ /^\d\.\d\d$/) && ($ExtUtils::MakeMaker::VERSION > 6.30) )
 {
-	$params{LICENSE} = 'artistic_2';
+	$params{LICENSE} = 'perl';
 }
 
 if ($ExtUtils::MakeMaker::VERSION ge '6.46')
@@ -60,17 +63,17 @@ if ($ExtUtils::MakeMaker::VERSION ge '6.46')
 	{
 		'meta-spec' =>
 		{
-		'version' => 2,
+			version => 2,
 		},
-		resources   =>
+		resources =>
 		{
-		'bugtracker' => 'https://rt.cpan.org/Public/Dist/Display.html?Name=Tree-Cladogram',
-		'license' => 'http://opensource.org/licenses/Artistic-2.0',
-			repository =>
+			bugtracker	=> 'https://rt.cpan.org/Public/Dist/Display.html?Name=Tree-Cladogram',
+			license		=> 'http://dev.perl.org/licenses/',
+			repository	=>
 			{
-		'type' => 'git',
-		'url' => 'https://github.com/ronsavage/Tree-Cladogram.git',
-		'web' => 'https://github.com/ronsavage/Tree-Cladogram',
+				type	=> 'git',
+				url		=> 'https://github.com/ronsavage/Tree-Cladogram.git',
+				web		=> 'https://github.com/ronsavage/Tree-Cladogram',
 			},
 		},
 	};
