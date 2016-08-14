@@ -35,6 +35,7 @@ my(%params) =
 		#'Image::Magick'	=> 6.9.3, # Image::Magick is optional.
 		'Imager'			=> 1.004,
 		'Imager::Fill'		=> 1.012,
+		'Log::Handler'		=> 0.84,
 		'Moo'				=> 2.000002,
 		'parent'			=> 0,
 		'Pod::Usage'		=> 1.67,
@@ -45,9 +46,8 @@ my(%params) =
 	},
 	TEST_REQUIRES =>
 	{
-		'Test::More'		=> 1.001014,
-		'Test::Stream'		=> 1.302026,
-		'Test::Pod'			=> 1.48,
+		'Test::Pod'			=> 1.51,
+		'Test::Simple'		=> 1.302052, # For Test::More.
 	},
 	VERSION_FROM => 'lib/Tree/Cladogram.pm',
 );

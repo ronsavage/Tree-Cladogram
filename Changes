@@ -1,5 +1,11 @@
 Revision history for Perl extension Tree::Cladogram.
 
+1.03  2016-08-14T11:33:00
+	- Stop using Test::Stream. Use Test::More shipped in the Test::Simple distro.
+		See RT#116931. Thanx to Chad Granum.
+	- Add Log::Handler to the pre-reqs.
+	- Update version #s is pre-reqs.
+
 1.02  2016-04-25T09:26:00
 	- No code changes.
 	- Fix my licence (sic) mess so all references are to Perl. This involves edits to Makefile.PL

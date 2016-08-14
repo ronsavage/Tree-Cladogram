@@ -6,7 +6,7 @@ use File::Temp;
 
 use Imager;
 
-use Test::Stream -V1;
+use Test::More;
 
 use Tree::Cladogram::Imager;
 
