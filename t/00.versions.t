@@ -5,18 +5,20 @@ use warnings;
 
 # I tried 'require'-ing modules but that did not work.
 
-use Tree; # For the version #.
+use Tree::Cladogram; # For the version #.
 
 use Test::More;
 
-use base;
-use constant;
-use Data::Dumper;
-use Exporter;
-use lib;
-use overload;
-use Scalar::Util;
+use File::Slurper;
+use Getopt::Long;
+use Imager;
+use Imager::Fill;
+use Moo;
+use parent;
+use Pod::Usage;
 use strict;
+use Tree::DAG_Node;
+use Types::Standard;
 use warnings;
 
 # ----------------------
@@ -25,18 +27,20 @@ pass('All external modules loaded');
 
 my(@modules) = qw
 /
-	base
-	constant
-	Data::Dumper
-	Exporter
-	lib
-	overload
-	Scalar::Util
+	File::Slurper
+	Getopt::Long
+	Imager
+	Imager::Fill
+	Moo
+	parent
+	Pod::Usage
 	strict
+	Tree::DAG_Node
+	Types::Standard
 	warnings
 /;
 
-diag "Testing Tree V $Tree::VERSION";
+diag "Testing Tree::Cladogram V $Tree::Cladogram::VERSION";
 
 for my $module (@modules)
 {
