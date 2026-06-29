@@ -38,6 +38,7 @@ my(%params) =
 		'Imager::Fill'			=> 1.012,
 		'Moo'					=> 2.000002,
 		'parent'				=> 0,
+		'perl'					=> 5.020004,
 		'Pod::Usage'			=> 1.67,
 		'strict'				=> 0,
 		'Tree::DAG_Node'		=> 1.27,
